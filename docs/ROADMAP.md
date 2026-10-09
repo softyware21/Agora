@@ -14,6 +14,8 @@
 - Quote matching and separate model assessments of source support.
 - Six fixed evaluation cases comparing independent initial answers with the summary.
 - Exact answer-field grading, visible regressions, and resumable evaluation batches.
+- Four challenge cases with independently checked numerical keys.
+- Mixed, Codex-only, and Claude-only comparison arms with equal call counts.
 
 ## Next: reproducibility
 
@@ -30,7 +32,8 @@
 - Improve calculation coverage beyond model-declared expressions.
 - Keep agreement separate from evidence status.
 - Expand evaluation beyond the small arithmetic, logic, false-premise, and missing-information set.
-- Add repeated runs, held-out cases, human review, and equal-budget single-model controls.
+- Add repeated runs, held-out cases, blinded human review, and counterbalanced arm order.
+- Measure token and time differences beyond the current equal-call controls.
 
 ## User experience
 

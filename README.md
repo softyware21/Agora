@@ -139,6 +139,16 @@ declared answer fields against fixed keys and reports both improvements and
 regressions. Explanations still need human review; this is not a general accuracy
 score or an equal-budget comparison. See [evaluation and resume instructions](docs/EVALUATION.md).
 
+To compare the mixed debate with five-call Codex-only and Claude-only runs:
+
+```sh
+python budget_compare.py --case conditional-projects
+```
+
+This uses 15 calls total. Four additional challenge cases are available; `--all`
+runs them with 60 calls. Call counts are matched, but tokens and compute are not.
+See [the comparison design and limitations](docs/BUDGET_COMPARISON.md).
+
 ## Subscription usage and security
 
 Agora consumes your subscription allowance. It does not provide unlimited usage
