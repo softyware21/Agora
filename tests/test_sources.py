@@ -1,6 +1,8 @@
 import socket
 import unittest
 from unittest.mock import patch
+from unittest.mock import MagicMock
+from email.message import Message
 
 import sources
 
@@ -44,3 +46,39 @@ class SourceTests(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['status'], 'unavailable')
         self.assertEqual(result[0]['id'], 'S01')
+
+    def response(self, status=200, headers=None, chunks=None):
+        response = MagicMock()
+        response.status = status
+        response.headers = Message()
+        for key, value in (headers or {'Content-Type': 'text/plain'}).items():
+            response.headers[key] = value
+        response.getheader.side_effect = response.headers.get
+        response.read1.side_effect = chunks or [b'Example text.', b'']
+        return response
+
+    def test_redirect_to_private_host_is_blocked_before_second_connection(self):
+        with patch.object(sources, 'PublicHTTPSConnection') as connection:
+            connection.return_value.getresponse.return_value = self.response(302, {'Location': 'https://127.0.0.1/'})
+            with self.assertRaises(sources.SourceError):
+                sources.fetch('https://example.org/')
+            self.assertEqual(connection.call_count, 1)
+
+    def test_content_limits_and_unsupported_formats(self):
+        responses = [self.response(404), self.response(headers={'Content-Type': 'application/pdf'}),
+                     self.response(headers={'Content-Type': 'text/plain', 'Content-Encoding': 'gzip'}),
+                     self.response(chunks=[b'x' * (sources.MAX_BYTES + 1), b''])]
+        for response in responses:
+            with patch.object(sources, 'PublicHTTPSConnection') as connection:
+                connection.return_value.getresponse.return_value = response
+                with self.assertRaises(sources.SourceError):
+                    sources.fetch('https://example.org/')
+
+    def test_snapshot_has_date_hash_and_truncation_flag(self):
+        with patch.object(sources, 'PublicHTTPSConnection') as connection:
+            connection.return_value.getresponse.return_value = self.response(chunks=[b'x' * 13000, b''])
+            result = sources.fetch('https://example.org/')
+        self.assertEqual(len(result['text']), sources.MAX_TEXT)
+        self.assertTrue(result['truncated'])
+        self.assertEqual(len(result['sha256']), 64)
+        self.assertIn('retrieved_at', result)
