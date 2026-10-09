@@ -7,7 +7,7 @@ import ipaddress
 import socket
 import ssl
 import time
-from urllib.parse import urlsplit, urlunsplit, urljoin
+from urllib.parse import urlsplit, urlunsplit, urljoin, quote
 
 MAX_BYTES = 512_000
 MAX_TEXT = 12_000
@@ -41,7 +41,8 @@ def validate_url(url):
     if ip is not None and not ip.is_global:
         raise SourceError('Private and reserved addresses are not allowed.')
     authority = f'[{host}]' if ':' in host else host
-    return urlunsplit(('https', authority, parts.path or '/', '', ''))
+    path = quote(parts.path or '/', safe="/%:@!$&'()*+,;=-._~")
+    return urlunsplit(('https', authority, path, '', ''))
 
 
 def public_address(host):

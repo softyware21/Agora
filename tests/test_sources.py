@@ -20,6 +20,10 @@ class SourceTests(unittest.TestCase):
     def test_fragment_removed(self):
         self.assertEqual(sources.validate_url('https://example.com/page#section'), 'https://example.com/page')
 
+    def test_unicode_paths_are_encoded_without_double_encoding(self):
+        self.assertEqual(sources.validate_url('https://example.com/문서/%20'),
+                         'https://example.com/%EB%AC%B8%EC%84%9C/%20')
+
     def test_dns_must_only_return_public_addresses(self):
         for addresses in [['127.0.0.1'], ['93.184.216.34', '10.0.0.1']]:
             entries = [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (ip, 443)) for ip in addresses]
