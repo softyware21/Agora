@@ -39,7 +39,11 @@ class WebTests(unittest.TestCase):
     def test_cross_origin_and_wrong_host_cannot_read_or_start(self):
         for headers in ({'Origin': 'https://example.org'}, {'Host': 'example.org'}, {'X-Agora-Token': 'wrong'}):
             with self.subTest(headers=headers), patch.object(self.server.app, 'start') as start:
-                self.assertEqual(self.request('/api/start', {'question': 'q'}, headers)[0], 403)
+                try:
+                    self.assertEqual(self.request('/api/start', {'question': 'q'}, headers)[0], 403)
+                except ConnectionError:
+                    # Windows may reset a rejected POST while discarding its unread body.
+                    pass
                 self.assertEqual(self.request('/api/state', headers=headers)[0], 403)
                 start.assert_not_called()
 
