@@ -1,0 +1,118 @@
+# Agora
+
+Automated, rule-driven debates between Codex and Claude Code, using locally
+installed official CLIs and your own subscription login.
+
+**Status: early prototype.** Agora automates answer exchange; it does not yet
+verify claims against external sources. Agreement between models is not proof.
+
+## How it works
+
+1. Give Agora a question and optional discussion rules.
+2. Codex and Claude independently produce initial answers.
+3. Each participant reviews the other participant's previous answer and revises
+   its position. Both see the previous round, not the other's new response.
+4. After one to three rounds, Codex writes a final summary.
+5. Agora saves a Markdown report and a JSON transcript after each completed turn.
+
+One review round makes five model calls, two make seven, and three make nine.
+Each call starts a new session with explicit context. Answers follow the language
+of the question unless your rules specify otherwise.
+
+## Requirements
+
+- Python 3.11 or later; no third-party Python dependencies.
+- Official Codex CLI signed in with a ChatGPT subscription.
+- Official Claude Code signed in with a personal Pro or Max subscription.
+- An internet connection and remaining subscription allowance.
+
+The live integration was tested on Windows with Codex CLI `0.162.0-alpha.2` and
+Claude Code `2.1.295`. Other versions and platforms have not been integration-tested.
+Unit tests do not require either CLI.
+
+## Quick start
+
+Install [Codex CLI](https://developers.openai.com/codex/cli) and
+[Claude Code](https://code.claude.com/docs/en/setup), then:
+
+```sh
+git clone https://github.com/softyware21/Agora.git
+cd Agora
+codex login
+claude auth login
+python agora.py --check
+python agora.py --question "What assumptions would invalidate this proposal?"
+```
+
+Use subscription login rather than a Console/API account. `--check` inspects the
+saved authentication type; a session-refresh failure may only appear on a real call.
+On Windows, you can also double-click `start.cmd` and enter a question.
+Use `login-claude.cmd` to renew an expired login. Complete authentication through
+the official browser/terminal flow; never paste credentials into an issue.
+
+If needed, set `AGORA_CODEX_PATH` or `AGORA_CLAUDE_PATH` to the official executable.
+On Windows, point to an `.exe`, not a shell wrapper.
+
+## Rules and limits
+
+```sh
+python agora.py --question "Review this plan" --rules "Separate evidence from assumptions." --rounds 2
+```
+
+Defaults: one review round, 180 seconds per generation, 600-second overall generation
+deadline. Set `--timeout` and `--deadline` to change them. Authentication checks and
+cleanup can add overhead. Press Ctrl+C to stop. No automatic retries or API fallback.
+
+Results are saved to `runs/<run-id>/report.md` and `transcript.json`. Failed runs
+retain completed turns and are marked `stopped`. Histories are local, plaintext
+files excluded from Git.
+
+## Subscription usage and security
+
+Agora consumes your subscription allowance. It does not provide unlimited usage
+and cannot disable provider-side paid extra usage. Turn off extra-usage options in
+your provider accounts if you need to avoid additional charges.
+
+Before generation, Agora checks subscription authentication and removes API-key
+and provider overrides from the child environment. It does not read, copy, or
+publish CLI credential files. Codex uses a read-only sandbox with shell disabled
+and user configuration ignored. Claude Code uses safe/restricted modes with tools
+disabled. Provider-managed policies still apply.
+
+These controls are not a billing audit or a guarantee against future CLI changes.
+Review the providers' terms before deploying for others. Agora is independent and
+is not affiliated with or endorsed by OpenAI or Anthropic.
+
+## Limitations
+
+- No web interface, external source checking, or deterministic calculator.
+- No claim-level verification, resumable runs, or remaining-allowance dashboard.
+- Codex writes the summary, which can introduce summarization bias.
+- CLI models and features may differ from the providers' web applications.
+
+On October 9, 2026, a live five-call subscription-authenticated cycle completed on
+a synthetic cost question. It demonstrated peer review and corrections, not a
+general accuracy improvement. Billing statements were not audited. The live check
+preceded the repository's English-language cleanup; prompts have since been translated.
+
+## Development
+
+```sh
+python -m unittest discover -s tests -v
+```
+
+Tests use fake providers without consuming model usage. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for repository conventions and
+[the roadmap](docs/ROADMAP.md) for planned work.
+
+## License
+
+A license has not been selected. Public visibility alone does not grant an
+open-source license. License selection is a prerequisite for an open-source release.
+
+## References
+
+- [Codex authentication](https://learn.chatgpt.com/docs/auth)
+- [Codex non-interactive mode](https://learn.chatgpt.com/docs/non-interactive-mode)
+- [Claude Code programmatic execution](https://code.claude.com/docs/en/headless)
+- [Claude Code legal and compliance guidance](https://code.claude.com/docs/en/legal-and-compliance)

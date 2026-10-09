@@ -1,0 +1,17 @@
+runs/
+.runtime/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+work/
+.venv/
+venv/
+.codex/
+.claude/
+auth.json
+credentials.json
+*.log
+.DS_Store
+Thumbs.db
