@@ -16,8 +16,8 @@ def steps(rounds):
             + [('codex', 'summary', rounds)])
 
 
-def fingerprint(question, rules, rounds, prompt_version):
-    data = json.dumps([question, rules, rounds, prompt_version], ensure_ascii=False)
+def fingerprint(question, rules, rounds, prompt_version, source_snapshots=None):
+    data = json.dumps([question, rules, rounds, prompt_version, source_snapshots or []], ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(data.encode('utf-8')).hexdigest()
 
 
@@ -33,7 +33,19 @@ def load(folder, prompt_version):
             raise ValueError('Invalid saved question, rules, or round count.')
         if record.get('prompt_version') != prompt_version:
             raise ValueError('Prompt version changed; start a new run.')
-        if record.get('config_hash') != fingerprint(question, rules, rounds, prompt_version):
+        snapshots = record.get('sources', [])
+        if not isinstance(snapshots, list) or len(snapshots) > 5:
+            raise ValueError('Invalid source snapshots.')
+        for index, source in enumerate(snapshots, 1):
+            if (not isinstance(source, dict) or source.get('id') != f'S{index:02d}'
+                    or source.get('status') not in ('retrieved', 'unavailable')
+                    or not isinstance(source.get('text'), str) or len(source['text']) > 12000):
+                raise ValueError('Invalid source snapshot.')
+            if source['status'] == 'retrieved':
+                if (not all(isinstance(source.get(key), str) for key in ('url', 'final_url', 'retrieved_at', 'sha256'))
+                        or source['sha256'] != hashlib.sha256(source['text'].encode()).hexdigest()):
+                    raise ValueError('Source snapshot changed.')
+        if record.get('config_hash') != fingerprint(question, rules, rounds, prompt_version, snapshots):
             raise ValueError('Saved settings changed; start a new run.')
         if record.get('status') not in ('running', 'stopped', 'completed'):
             raise ValueError('Invalid run status.')
