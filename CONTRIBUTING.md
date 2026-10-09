@@ -9,6 +9,9 @@ Use English for tracked documentation, code comments, interface strings, commit
 messages, issues, pull requests, and release notes. User questions and model
 answers may use any language and should not be committed by default.
 
+Keep the writing plain. Comments should explain a non-obvious decision; commit
+messages should say what changed and why. Avoid promotional copy and boilerplate.
+
 ## Commit history
 
 - Keep each commit focused on one meaningful change.
