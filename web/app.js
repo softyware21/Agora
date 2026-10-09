@@ -1,5 +1,5 @@
 const korean = {
-  "Ready with GPT and Claude defaults. Change the options only if you need to.": "GPT와 Claude 기본 모델로 준비되어 있습니다. 주제만 입력해 시작할 수 있어요.",
+  "Start with a question. Model and round settings are optional.": "주제부터 입력하세요. 모델과 라운드는 필요할 때 설정하면 됩니다.",
   "Models & rounds": "모델 및 라운드 설정",
   "Advanced model selection": "고급 모델 설정",
   "Custom model ID": "직접 입력할 모델 ID",
@@ -228,6 +228,9 @@ function renderHistory() {
   for (const run of state.runs) {
     const button = node('button', undefined, run.id === selected ? 'selected' : '');
     button.append(node('span', run.status === 'unavailable' ? t(run.question) : run.question, 'history-title'), node('small', t('{status} · {count} answers', {status: run.status === 'running' ? t('Unfinished') : t(run.status), count: run.turns})));
+    const date = new Date(run.started_at);
+    if (run.started_at && !Number.isNaN(date.getTime())) button.append(node('small', date.toLocaleString(language === 'ko' ? 'ko-KR' : 'en-US')));
+    if (run.status === 'unavailable') button.append(node('small', t('Record: {id}', {id: run.id})));
     button.onclick = () => act(() => openRun(run.id)); $('history').append(button);
   }
 }
@@ -268,15 +271,31 @@ function renderDetail(data) {
     const quotes = node('details'); quotes.id = `issue-${issue.id}`; quotes.open = open.has(quotes.id);
     quotes.append(node('summary', t('Cited positions · {status}', {status: t(issue.citation_status.replaceAll('_', ' '))})));
     for (const position of issue.positions) quotes.append(node('p', `${position.provider || t('Unknown')}: ${position.position || t('Unavailable')}`, 'tiny'), node('blockquote', position.quote || t('No valid quote.')));
-    card.append(quotes); $('issues').append(card);
+    card.append(quotes);
+    if (issue.status !== 'agreed' && data.can_continue && !active) {
+      const actions = node('div', undefined, 'toolbar');
+      for (const evidence of [false, true]) {
+        const button = node('button', t(evidence ? 'Add evidence' : 'Revisit this issue'));
+        button.disabled = !!job.active;
+        button.onclick = () => {
+          edit('continue', record, data.id);
+          $('note').value = [issue.topic, issue.reason, issue.next_step].filter(Boolean).join('\n');
+          if (evidence) { $('sources').closest('details').open = true; $('sources').focus(); }
+          else $('note').focus();
+        };
+        actions.append(button);
+      }
+      card.append(actions);
+    }
+    $('issues').append(card);
   }
-  $('summary-section').hidden = !record.summary; $('summary-text').textContent = record.summary || '';
+  $('summary-section').hidden = !record.summary; $('summary-text').replaceChildren(renderAnswer(record.summary || '', t));
   $('turns').replaceChildren();
   record.turns.forEach((turn, i) => {
     const item = node('details', undefined, 'answer'); item.id = `turn-${i}`; item.open = open.has(item.id);
     const meta = turn.metadata || {};
     item.append(node('summary', `${String(i + 1).padStart(2, '0')} · ${turn.provider} · ${t(turn.phase)}${turn.round ? t(' / round {round}', {round: turn.round}) : ''}`),
-      node('p', t('Requested: {requested} · Reported: {reported}', {requested: meta.requested_model || t('default / not recorded'), reported: (meta.models || []).join(', ') || t('unavailable')}), 'hint'), node('pre', turn.text));
+      node('p', t('Requested: {requested} · Reported: {reported}', {requested: meta.requested_model || t('default / not recorded'), reported: (meta.models || []).join(', ') || t('unavailable')}), 'hint'), renderAnswer(turn.text, t));
     $('turns').append(item);
   });
 }
@@ -319,6 +338,13 @@ $('new').onclick = () => edit();
 $('back-setup').onclick = () => { selected = null; $('editor').hidden = false; $('discussion').hidden = true; renderHistory(); };
 $('view-active').onclick = () => act(() => openRun(state.job.run_id));
 $('setup').addEventListener('input', invalidate);
+$('setup').addEventListener('invalid', event => {
+  let container = event.target.parentElement;
+  while (container && container !== $('setup')) {
+    if (container.tagName === 'DETAILS') container.open = true;
+    container = container.parentElement;
+  }
+}, true);
 $('summary-provider').addEventListener('change', () => { fillModels('summary', $('summary-provider').value); invalidate(); });
 for (const kind of ['codex', 'claude', 'summary']) {
   $(`${kind}-model`).addEventListener('change', () => {
@@ -360,6 +386,7 @@ const staticAttributes = [...document.querySelectorAll('[placeholder], [aria-lab
   ['placeholder', 'aria-label'].filter(name => element.hasAttribute(name)).map(name => [element, name, element.getAttribute(name)]));
 function setLanguage(value) {
   const savedModels = selection();
+  const customKinds = ['codex', 'claude', 'summary'].filter(kind => $(`${kind}-model`).value === '__custom').map(kind => [kind, $(`${kind}-custom`).value]);
   language = value;
   try { localStorage.setItem('agora.language', value); } catch (_) { /* Keep the selection for this page. */ }
   document.documentElement.lang = value;
@@ -375,6 +402,10 @@ function setLanguage(value) {
   $('start').textContent = t(mode === 'new' ? 'Start discussion →' : mode === 'resume' ? 'Resume discussion →' : 'Start follow-up →');
   fillModels('codex', 'codex', savedModels.codex); fillModels('claude', 'claude', savedModels.claude);
   fillModels('summary', savedModels.summary_provider, savedModels.summary_model);
+  for (const [kind, draft] of customKinds) {
+    $(`${kind}-custom`).value = draft;
+    $(`${kind}-model`).value = '__custom'; $(`${kind}-custom-wrap`).hidden = false; $(`${kind}-custom`).required = true;
+  }
   historySignature = ''; detailSignature = ''; renderHistory();
   if (detail && selected === detail.id) renderDetail(detail);
   if (planPayload) {

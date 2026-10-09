@@ -6,6 +6,7 @@
   <meta name="agora-token" content="__AGORA_TOKEN__">
   <title>Agora — A place to think it through</title>
   <link rel="stylesheet" href="/style.css">
+  <script src="/answer.js" defer></script>
   <script src="/app.js" defer></script>
 </head>
 <body>
@@ -31,7 +32,7 @@
         <label for="question">Your question</label>
         <textarea id="question" rows="4" maxlength="12000" required placeholder="Describe a decision, challenge an assumption, or examine a proposal…"></textarea>
         <div id="note-wrap" hidden><label for="note">New information or focus</label><textarea id="note" rows="3" maxlength="8000" placeholder="What should the next round reconsider?"></textarea></div>
-        <p class="hint">Ready with GPT and Claude defaults. Change the options only if you need to.</p>
+        <p class="hint">Start with a question. Model and round settings are optional.</p>
         <details id="model-settings" class="settings"><summary>Models & rounds</summary>
         <div class="section-label">THE TABLE</div>
         <div class="participants">
@@ -70,7 +71,7 @@
       <p class="hint">These are model judgments. Agreement and matching quotes do not establish truth.</p>
       <div id="outcome-counts" class="outcome-counts"></div>
       <div id="issues"></div>
-      <details id="summary-section" class="answer" hidden><summary>Final summary</summary><pre id="summary-text"></pre></details>
+      <details id="summary-section" class="answer" hidden><summary>Final summary</summary><div id="summary-text"></div></details>
       <div class="section-label timeline-label">THE DISCUSSION</div><div id="turns"></div>
     </section>
     <div class="page-footer">Think together. Keep the evidence separate.</div>

@@ -65,7 +65,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/':
                 text = (WEB / 'index.html').read_text(encoding='utf-8').replace('__AGORA_TOKEN__', self.server.token)
                 self.reply(200, text.encode('utf-8'), 'text/html; charset=utf-8')
-            elif self.path in ('/app.js', '/style.css'):
+            elif self.path in ('/app.js', '/answer.js', '/style.css'):
                 kind = 'text/javascript' if self.path.endswith('.js') else 'text/css'
                 self.reply(200, (WEB / self.path[1:]).read_bytes(), kind + '; charset=utf-8')
             elif self.path == '/api/state':

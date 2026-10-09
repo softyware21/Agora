@@ -693,3 +693,21 @@ progress::-webkit-progress-value {
     font-size:27px;
   }
 }
+
+.prose { font-size:14px; line-height:1.8; overflow-wrap:anywhere; }
+.prose h2,.prose h3,.prose h4 { margin:24px 0 10px; line-height:1.5; }
+.prose p { margin:10px 0; white-space:pre-wrap; }
+.prose ul,.prose ol { padding-left:24px; }
+.prose li { margin:6px 0; }
+.prose a { color:var(--green); text-decoration:underline; }
+.prose code { font-family:Consolas,monospace; background:var(--soft); padding:2px 4px; }
+.prose pre { padding:14px; background:var(--soft); border-radius:5px; font-family:Consolas,monospace; }
+.prose pre code { padding:0; }
+.prose blockquote { border-left:3px solid var(--line); margin:16px 0; padding-left:16px; color:var(--muted); }
+.prose details { margin:18px 0; }
+.prose details summary { color:var(--muted); font-size:12px; }
+.table-scroll { overflow-x:auto; }
+.prose table { border-collapse:collapse; width:100%; margin:16px 0; }
+.prose th,.prose td { border:1px solid var(--line); padding:9px 12px; text-align:left; min-width:90px; }
+.prose th { background:var(--soft); }
+#launch-help { margin:40px auto; max-width:720px; padding:30px; }

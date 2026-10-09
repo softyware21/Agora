@@ -62,6 +62,12 @@ class WebTests(unittest.TestCase):
         self.assertEqual(headers['Cache-Control'], 'no-store')
         self.assertNotIn(b'__AGORA_TOKEN__', body)
 
+    def test_answer_formatter_is_served(self):
+        status, headers, body = self.request('/answer.js')
+        self.assertEqual(status, 200)
+        self.assertIn('text/javascript', headers['Content-Type'])
+        self.assertIn(b'function renderAnswer', body)
+
     def test_only_explicit_assets_and_run_downloads_are_served(self):
         for path in ('/agora.py', '/../../auth.json', '/api/download/../auth.json', '/api/runs/../secret'):
             with self.subTest(path=path):
