@@ -1,0 +1,42 @@
+[
+  {
+    "id": "dated-exception",
+    "category": "document_precedence",
+    "question": "On 2026-04-15, how many days should Project Cedar in the EU retain diagnostic logs? Identify the governing document. Does the newer announcement establish that Cedar must already use 7 days?",
+    "documents": [
+      {"id":"D1","text":"Approved baseline, effective 2026-01-01: retain diagnostic logs for 30 days. A signed project exception overrides this baseline while the exception is effective."},
+      {"id":"D2","text":"Signed exception for EU Project Cedar, effective 2026-04-01 through 2026-06-30 inclusive: retain diagnostic logs for 14 days. This exception remains in force despite general baseline changes during its effective period."},
+      {"id":"D3","text":"Announcement published 2026-04-10: the general baseline changes to 7 days starting 2026-05-01. Existing signed exceptions remain applicable according to their terms."},
+      {"id":"D4","text":"US Project Cedar operations note, 2026-04-12: our current configuration retains logs for 7 days. This note describes the US project only."}
+    ],
+    "fields":{"days":"number","governing_document":["D1","D2","D3","D4"],"announcement_requires_7_now":["yes","no"]},
+    "expected":{"days":"14","governing_document":"D2","announcement_requires_7_now":"no"},
+    "rationale":"D2 is the applicable signed EU exception on April 15. D3 starts in May and preserves exceptions. D4 covers the US project, not the EU project."
+  },
+  {
+    "id": "unresolved-runbooks",
+    "category": "unresolved_document_conflict",
+    "question": "For service Orion at severity S2, can these documents determine one authorized action without inventing a priority? Report restart, do_not_restart, or unresolved. Is the claim that D2 supersedes D1 established? Is D3 sufficient to authorize a restart?",
+    "documents":[
+      {"id":"D1","text":"Approved Orion runbook, effective 2026-03-01, owner Operations: at severity S2, restart immediately. Remains effective until explicitly superseded."},
+      {"id":"D2","text":"Approved Orion runbook, effective 2026-03-01, owner Reliability: at severity S2, do not restart; preserve the running process for inspection. Remains effective until explicitly superseded."},
+      {"id":"D3","text":"Chat note dated 2026-03-20, author unverified: I think Reliability replaced the Operations runbook. Last week's team restarted Orion. This is not an approval or a policy amendment."}
+    ],
+    "fields":{"action":["restart","do_not_restart","unresolved"],"d2_supersedes_d1_established":["yes","no"],"d3_authorizes_restart":["yes","no"]},
+    "expected":{"action":"unresolved","d2_supersedes_d1_established":"no","d3_authorizes_restart":"no"},
+    "rationale":"D1 and D2 impose incompatible instructions with equal effective dates and no established supersession. D3 supplies neither authority nor reliable supersession evidence. An actual operational decision needs clarification; neither action is established by these documents alone."
+  },
+  {
+    "id": "incompatible-metrics",
+    "category": "document_metric_scope",
+    "question": "Do the supplied documents establish that request failures fell by 60% from January to February for the same customer population? Give the exact February request failure percentage, or unknown if it cannot be derived. Is D3's numerical improvement claim established?",
+    "documents":[
+      {"id":"D1","text":"January final report, all customers: 20 failed requests out of 1000 requests, a 2% request failure rate. A session can contain multiple requests."},
+      {"id":"D2","text":"February draft report, premium customers only: 8 sessions containing at least one failed request out of 1000 sessions, a 0.8% affected-session rate. Total requests and total failed requests were not collected. Some sessions have several failed requests."},
+      {"id":"D3","text":"Executive slide: January 2%, February 0.8%; therefore request failures fell by 60% across all customers. This slide uses D1 and D2 and contains no additional measurements."}
+    ],
+    "fields":{"comparable_population_and_metric":["yes","no"],"february_request_percent":"number_or_unknown","d3_improvement_established":["yes","no"]},
+    "expected":{"comparable_population_and_metric":"no","february_request_percent":"unknown","d3_improvement_established":"no"},
+    "rationale":"D1 measures requests across all customers; D2 measures affected sessions among premium customers. The request denominator and failed-request count for February are absent. Computing a 60% difference between the displayed numbers does not validate D3's claim."
+  }
+]

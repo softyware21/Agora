@@ -56,7 +56,7 @@ def records(folder, manifest):
     for case in manifest['cases']:
         path = folder / case['id']
         record = run_state.load(path, manifest['prompt_version']) if (path / 'transcript.json').exists() else None
-        if record and (record['question'] != case['question'] or record['rules'] != evaluation.rules(case)
+        if record and (record['question'] != evaluation.question(case) or record['rules'] != evaluation.rules(case)
                        or record['rounds'] != manifest['rounds'] or record.get('sources', [])):
             raise ValueError('Transcript does not belong to this evaluation case.')
         result[case['id']] = record
@@ -109,7 +109,7 @@ def report(folder, manifest):
               'and whether uncertainty is handled honestly. A correct field can accompany a bad explanation.',
               'One small run does not establish that debate improves accuracy.', '']
     for case, row in zip(manifest['cases'], rows):
-        lines += [f"### {case['id']}", '', case['question'], '',
+        lines += [f"### {case['id']}", '', evaluation.question(case), '',
                   'Answer key: `' + json.dumps(case['expected'], sort_keys=True) + '`', '',
                   case['rationale'], '']
         if saved[case['id']]:
@@ -139,7 +139,7 @@ def run_batch(folder, providers, timeout=180, deadline=600):
                 if saved[case['id']] and saved[case['id']]['status'] == 'completed':
                     continue
                 print(f"Evaluation case: {case['id']}", flush=True)
-                agora.debate(providers, case['question'], evaluation.rules(case), manifest['rounds'],
+                agora.debate(providers, evaluation.question(case), evaluation.rules(case), manifest['rounds'],
                              timeout, folder / case['id'], deadline_seconds=deadline,
                              resume=saved[case['id']] is not None)
         finally:

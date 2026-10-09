@@ -172,7 +172,7 @@ def main():
     action.add_argument('--all', action='store_true')
     action.add_argument('--resume', type=Path)
     action.add_argument('--report', type=Path)
-    parser.add_argument('--suite', choices=('basic', 'challenge'), default='challenge')
+    parser.add_argument('--suite', choices=('basic', 'challenge', 'documents'), default='challenge')
     parser.add_argument('--timeout', type=int, default=180)
     parser.add_argument('--deadline', type=int, default=600)
     args = parser.parse_args()
