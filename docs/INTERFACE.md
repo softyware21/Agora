@@ -24,7 +24,12 @@ opens the browser. Use `--no-browser` to open the printed address yourself, or
 4. Select **Start discussion**. One discussion can run at a time in this server.
 
 Changing a setting clears the preview so the next start uses reviewed settings.
-Questions and answers may use any language; interface labels are English.
+Choose Korean or English with the sidebar language selector. The first visit uses
+the browser language; later visits use the saved choice when browser storage is
+available. Switching languages preserves the form, preview, and saved answers.
+Only interface labels change: questions, rules, model IDs, transcripts, and
+downloaded reports keep their original content. Provider diagnostics may remain
+in their original language. Questions and answers may use any language.
 
 ## Progress, stop, and recovery
 
