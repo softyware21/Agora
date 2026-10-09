@@ -18,6 +18,7 @@ import run_state
 import evidence
 import sources
 import source_evidence
+import attribution
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_RULES = "Respond in the question's language. Separate facts, assumptions, and opinions. Look for calculation errors and counterexamples. Do not equate agreement with verification."
@@ -45,6 +46,15 @@ decimal number or a fraction such as "1/3". Do not present rounded approximation
 Declare at most 10 calculations; use [] if there are none. Do not omit a calculation to hide an error.
 Give concise public reasoning, assumptions, objections, and conclusions; do not reveal private reasoning.
 Keep each answer concise (approximately 300 words). Respect a valid counterargument and revise.
+In summaries, distinguish reaching the same conclusion from explicitly accepting another speaker's point.
+Use turn_context to check which full answers each speaker could see. Reviews in the same round cannot
+see one another, even if execution is sequential. Older evidence snippets are not full answers.
+Do not say a speaker accepted a qualification that they never saw or explicitly addressed.
+In the summary only, append one fenced agora-attributions JSON array with up to five entries.
+For each claim about what a participant said or accepted, include claim, turn_id, quote (8-400 characters
+verbatim), and responds_to (the prior turn ID they responded to, or null for a simple quotation).
+Use [] when there are no attribution claims. Cite turn IDs in the prose too. A quote and a visible turn
+do not establish the meaning of agreement; keep the claim no broader than the quoted words support.
 """
 
 
@@ -200,7 +210,7 @@ class Provider:
 
 
 def build_prompt(question, rules, phase, own=None, peer=None, history=None, calculation_checks=None,
-                 source_snapshots=None, source_checks=None):
+                 source_snapshots=None, source_checks=None, turn_context=None):
     data = {"question": question, "rules": rules, "phase": phase}
     if own is not None:
         data.update(own_previous_answer=own, peer_previous_answer=peer)
@@ -211,6 +221,8 @@ def build_prompt(question, rules, phase, own=None, peer=None, history=None, calc
     data['sources'] = source_snapshots or []
     if source_checks is not None:
         data['source_checks'] = source_checks
+    if turn_context is not None:
+        data['turn_context'] = turn_context
     instruction = {
         "initial": "Analyze independently, without access to the other participant's answer.",
         "review": "Review the peer's errors, omissions, and counterexamples. Explain why you revise or retain your conclusion.",
@@ -221,7 +233,7 @@ def build_prompt(question, rules, phase, own=None, peer=None, history=None, calc
 
 def prompt_version():
     prompts = [build_prompt("", "", phase) for phase in ("initial", "review", "summary")]
-    return hashlib.sha256((str(evidence.VERSION) + "\n" + "\n".join(prompts)).encode()).hexdigest()
+    return hashlib.sha256((str(evidence.VERSION) + ':' + str(attribution.VERSION) + "\n" + "\n".join(prompts)).encode()).hexdigest()
 
 
 def speaker(turn):
@@ -239,6 +251,7 @@ def save(run_dir, record):
     checks = [check for turn in record['calculation_checks'] for check in turn['checks']]
     record['verification'] = 'declared_arithmetic_only' if checks else 'not_performed'
     record['source_checks'] = source_evidence.ledger(record['turns'], record.get('sources', []))
+    record['attribution_checks'] = attribution.ledger(record['turns'])
     temporary = run_dir / "transcript.tmp"
     temporary.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     temporary.replace(run_dir / "transcript.json")
@@ -282,6 +295,20 @@ def save(run_dir, record):
         for review in row['assessments']:
             lines += [f"- Review of {review['target']}: {review['relation']} ({review['status']})",
                       f"  {review['reason']}", '']
+    lines += ['## Summary attribution checks', '',
+              'Quotes and full-answer visibility only; the meaning of agreement is not verified.', '']
+    for row in record['attribution_checks']:
+        lines += [f"Summary {row['turn']}: {row['status']}", '']
+        for check in row['checks']:
+            lines += [f"- {check['status']}: {check['claim']}",
+                      f"  Cited turn: {check['turn_id']}; response to: {check['responds_to']}",
+                      f"  Quote: {check['quote']}", f"  {check['reason']}", '']
+    lines += ['## Full-answer visibility', '',
+              'Older calculation and source snippets may also appear in reviews; they do not contain every earlier statement.', '']
+    for index, entry in enumerate(record['turns']):
+        seen = attribution.visible(record['turns'][:index], entry['phase'], entry['round'])
+        lines += [f"- {attribution.turn_id(index)}: {speaker(entry)}; full answers available: {', '.join(seen) or 'none'}"]
+    lines.append('')
     for entry in record["turns"]:
         lines += [f"## {entry['phase']} / {speaker(entry)} / round {entry['round']}", entry["text"], ""]
     (run_dir / "report.md").write_text("\n".join(lines), encoding="utf-8")
@@ -335,7 +362,9 @@ def _debate(providers, question, rules, rounds, timeout, run_dir, deadline_secon
         if remaining < 1:
             raise AgoraError("The overall execution deadline was reached.", "deadline")
         print(f"[{phase} / {round_number}] Waiting for {name}...", flush=True)
-        answer = providers[name].answer(build_prompt(question, rules, phase, source_snapshots=record.get('sources', []), **kwargs), min(timeout, remaining))
+        answer = providers[name].answer(build_prompt(question, rules, phase,
+                        turn_context=attribution.context(record['turns'], phase, round_number),
+                        source_snapshots=record.get('sources', []), **kwargs), min(timeout, remaining))
         record["turns"].append({"provider": name, "phase": phase, "round": round_number,
                                 "text": answer, "metadata": getattr(providers[name], 'last_metadata', {})})
         if phase == "summary":
