@@ -78,6 +78,18 @@ class BudgetTests(unittest.TestCase):
             self.assertEqual(scores['passes'], {a: 1 for a in budget.ARMS})
             budget.run(folder, {})
 
+    def test_incorrect_provider_metadata_is_rejected(self):
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / 'batch'
+            budget.create(folder, evaluation.load_cases('challenge')[:1])
+            budget.run(folder, {n: Participant(n) for n in ('codex', 'claude')})
+            path = folder / 'claude-only/reversed-aggregate/transcript.json'
+            record = json.loads(path.read_text())
+            record['turns'][-1]['metadata']['actual_provider'] = 'codex'
+            path.write_text(json.dumps(record))
+            with self.assertRaisesRegex(ValueError, 'routing'):
+                budget.run(folder, {})
+
     def test_resume_preserves_completed_arms_and_excludes_partial_pairs(self):
         with tempfile.TemporaryDirectory() as root:
             folder = Path(root) / 'batch'
