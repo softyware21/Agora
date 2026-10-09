@@ -60,6 +60,12 @@ or refresh sources. The combined source limit is five.
 
 ## History and recovery
 
+Model settings are inherited unless overridden. Participant models and the summary
+provider/model can change for new calls with the options in [model settings](MODELS.md).
+With a Claude summary, one extra round uses one Codex call and two Claude calls;
+with a Codex summary it uses two Codex calls and one Claude call. The preview shows
+the selected distribution.
+
 The command creates `runs/continued-<time>-<id>/` with a new report and transcript.
 Its `parent.json` is a byte-for-byte snapshot of the completed parent's transcript,
 including the old summary, rules, source snapshots, and issue outcomes. The parent

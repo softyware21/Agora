@@ -14,7 +14,7 @@ the claims. Neither a quote match nor agreement between models is proof.
 3. Each participant reviews the other participant's previous answer and revises
    its position. Both see the previous round and its evidence checks, not the
    other's new response.
-4. After one to three rounds, Codex writes a final summary.
+4. After one to three rounds, the selected provider writes a final summary (Codex by default).
 5. Agora saves a Markdown report and a JSON transcript after each completed turn.
 
 One review round makes five model calls, two make seven, and three make nine.
@@ -55,6 +55,23 @@ the official browser/terminal flow; never paste credentials into an issue.
 If needed, set `AGORA_CODEX_PATH` or `AGORA_CLAUDE_PATH` to the official executable.
 On Windows, point to an `.exe`, not a shell wrapper.
 
+## Model selection
+
+Select participant models and a summary provider before running:
+
+```sh
+python agora.py --codex-model gpt-6.1-sol --claude-model opus --summary-provider claude --plan
+python agora.py --question "Review this plan" --codex-model gpt-6.1-sol --claude-model opus --summary-provider claude
+```
+
+`--summary-model` chooses a separate model for the summary. Without it, the summary
+uses the selected participant model for that provider. Omit participant model
+options to use the CLI defaults. Model availability depends on your account;
+examples are not a list of guaranteed models. See [model settings](docs/MODELS.md).
+
+`--plan` prints the requested models and remaining calls without contacting either
+provider, retrieving sources, or creating a run. It also works with `--resume`.
+
 ## Rules and limits
 
 ```sh
@@ -74,7 +91,7 @@ python agora.py --resume runs/<run-id>
 
 Completed turns are reused. If the second reviewer failed, it still receives the
 previous round's answers, not the first reviewer's new answer. The question, rules,
-and round count stay fixed; `--timeout` and `--deadline` apply to the new attempt.
+round count, and requested models stay fixed; `--timeout` and `--deadline` apply to the new attempt.
 A completed run returns immediately without calling either model.
 
 Resume rejects damaged transcripts, changed settings, and a different prompt

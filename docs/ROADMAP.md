@@ -21,6 +21,7 @@
 - Summary quotation checks and explicit full-answer visibility across turns.
 - Issue-level model outcomes with both latest positions and citation checks.
 - Completed-discussion continuations with preserved history, supplements, and additional sources.
+- Participant and summary model selection, saved resume settings, and offline call previews.
 
 ## Next: reproducibility
 
@@ -50,5 +51,5 @@
 ## Later
 
 - Optional explicit API mode with separate billing controls.
-- Additional providers and configurable summarization roles.
+- Additional providers.
 - Authentication, privacy, and provider-terms review before hosted deployment.
