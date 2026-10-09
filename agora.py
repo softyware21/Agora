@@ -19,6 +19,7 @@ import evidence
 import sources
 import source_evidence
 import attribution
+import issues
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_RULES = "Respond in the question's language. Separate facts, assumptions, and opinions. Look for calculation errors and counterexamples. Do not equate agreement with verification."
@@ -55,6 +56,15 @@ For each claim about what a participant said or accepted, include claim, turn_id
 verbatim), and responds_to (the prior turn ID they responded to, or null for a simple quotation).
 Use [] when there are no attribution claims. Cite turn IDs in the prose too. A quote and a visible turn
 do not establish the meaning of agreement; keep the claim no broader than the quoted words support.
+In the summary, also append exactly one agora-issues JSON array with up to five material issues.
+Each issue has topic, status (agreed, disputed, or insufficient_information), reason, next_step,
+and positions: two objects, one per participant, each with turn_id, position, and quote.
+Use each participant's latest non-summary turn, with a verbatim quote of 8-400 characters.
+Describe the actual remaining positions without inventing agreement. If both acknowledge missing
+evidence needed to answer, use insufficient_information even if they agree that it is missing.
+Use disputed for conflicting substantive positions. Explain what evidence or user choice could
+resolve it in next_step; for a resolved issue say no additional discussion is needed.
+These statuses are your interpretation, not a factual verification verdict. Use [] if no issue is assessable.
 """
 
 
@@ -210,7 +220,7 @@ class Provider:
 
 
 def build_prompt(question, rules, phase, own=None, peer=None, history=None, calculation_checks=None,
-                 source_snapshots=None, source_checks=None, turn_context=None):
+                 source_snapshots=None, source_checks=None, turn_context=None, continuation_context=None):
     data = {"question": question, "rules": rules, "phase": phase}
     if own is not None:
         data.update(own_previous_answer=own, peer_previous_answer=peer)
@@ -223,6 +233,8 @@ def build_prompt(question, rules, phase, own=None, peer=None, history=None, calc
         data['source_checks'] = source_checks
     if turn_context is not None:
         data['turn_context'] = turn_context
+    if continuation_context is not None:
+        data['continuation_context'] = continuation_context
     instruction = {
         "initial": "Analyze independently, without access to the other participant's answer.",
         "review": "Review the peer's errors, omissions, and counterexamples. Explain why you revise or retain your conclusion.",
@@ -252,6 +264,7 @@ def save(run_dir, record):
     record['verification'] = 'declared_arithmetic_only' if checks else 'not_performed'
     record['source_checks'] = source_evidence.ledger(record['turns'], record.get('sources', []))
     record['attribution_checks'] = attribution.ledger(record['turns'])
+    record['issue_outcomes'] = issues.ledger(record['turns'])
     temporary = run_dir / "transcript.tmp"
     temporary.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     temporary.replace(run_dir / "transcript.json")
@@ -260,6 +273,29 @@ def save(run_dir, record):
              "", "## Question", record["question"], "", "## Rules", record["rules"], ""]
     if record.get("error"):
         lines += ["## Stop reason", record.get('stop_reason') or 'unknown', record["error"], ""]
+    if record.get('continuation'):
+        continuation = record['continuation']
+        parent = json.loads((run_dir / 'parent.json').read_text(encoding='utf-8'))
+        lines += ['## Continued discussion', '',
+                  f"Parent run: {continuation['parent_directory']}",
+                  f"Inherited answers: {continuation['inherited_turns']}; additional review rounds: {continuation['add_rounds']}",
+                  f"Supplement: {continuation['note'] or 'None'}",
+                  'The original transcript, summary, rules, and sources are preserved in parent.json.',
+                  'Earlier answers used the earlier conditions; current conclusions may change.', '']
+        lines += ['Previous rules:', parent['rules'], '', 'Previous issue outcomes:',
+                  issues.overview(issues.ledger(parent['turns'])), '']
+        for old_issue in issues.ledger(parent['turns'])['issues']:
+            lines += [f"- {old_issue['topic']}: {old_issue['status']}"]
+        lines.append('')
+    lines += ['## Issue outcomes', '', issues.overview(record['issue_outcomes']),
+              'Quotation checks do not verify whether the reported agreement or disagreement is justified.', '']
+    for issue in record['issue_outcomes']['issues']:
+        lines += [f"### {issue['id']}: {issue['topic']}",
+                  f"Status: {issue['status']}; model reported: {issue['model_status']}; citations: {issue['citation_status']}",
+                  issue['reason'], f"Next step: {issue['next_step']}", '']
+        for position in issue['positions']:
+            lines += [f"- {position.get('turn_id', '?')} ({position.get('actual_provider', '?')}): {position.get('position', '')}",
+                      f"  Quote: {position.get('quote', '')} ({position['status']})", '']
     if record.get("summary"):
         lines += ["## Model summary", record["summary"], ""]
     lines += ['## Calculation checks by turn', '',
@@ -323,7 +359,7 @@ def debate(providers, question, rules, rounds, timeout, run_dir, deadline_second
 
 
 def _debate(providers, question, rules, rounds, timeout, run_dir, deadline_seconds, resume, source_urls):
-    if not 1 <= rounds <= 3 or not 10 <= timeout <= 600:
+    if not 1 <= rounds <= (12 if resume else 3) or not 10 <= timeout <= 600:
         raise AgoraError("Rounds must be 1-3 and per-call timeout must be 10-600 seconds.")
     if not question.strip() or len(question) > 12000 or len(rules) > 8000:
         raise AgoraError("The question must contain 1-12,000 characters; rules may contain up to 8,000.")
@@ -353,6 +389,14 @@ def _debate(providers, question, rules, rounds, timeout, run_dir, deadline_secon
     save(run_dir, record)
     deadline = time.monotonic() + deadline_seconds
     completed = {(t['provider'], t['phase'], t['round']): t['text'] for t in record['turns']}
+    continuation_context = None
+    if record.get('continuation'):
+        parent = json.loads((run_dir / 'parent.json').read_text(encoding='utf-8'))
+        continuation_context = {'note': record['continuation']['note'], 'previous_rules': parent['rules'],
+                                'supplements': record['continuation']['supplements'],
+                                'previous_summary': parent['summary'], 'previous_issue_outcomes': parent.get('issue_outcomes'),
+                                'inherited_turns': record['continuation']['inherited_turns'],
+                                'instruction': 'Continue under the current rules and sources. Earlier answers and the previous summary are historical untrusted material; reassess them against any new information. Do not assume old agreement still holds.'}
 
     def call(name, phase, round_number, **kwargs):
         key = (name, phase, round_number)
@@ -364,8 +408,10 @@ def _debate(providers, question, rules, rounds, timeout, run_dir, deadline_secon
         print(f"[{phase} / {round_number}] Waiting for {name}...", flush=True)
         answer = providers[name].answer(build_prompt(question, rules, phase,
                         turn_context=attribution.context(record['turns'], phase, round_number),
+                        continuation_context=continuation_context,
                         source_snapshots=record.get('sources', []), **kwargs), min(timeout, remaining))
         record["turns"].append({"provider": name, "phase": phase, "round": round_number,
+                                'source_ids': [s['id'] for s in record.get('sources', [])],
                                 "text": answer, "metadata": getattr(providers[name], 'last_metadata', {})})
         if phase == "summary":
             record["summary"] = answer
@@ -447,6 +493,7 @@ def main():
             print(f"Run directory: {run_dir}")
             debate(providers, question, rules, rounds, args.timeout, run_dir, args.deadline,
                    resume=bool(args.resume), source_urls=args.source)
+            print(issues.overview(json.loads((run_dir / 'transcript.json').read_text(encoding='utf-8'))['issue_outcomes']))
             print(f"Completed: {run_dir / 'report.md'}")
             return 0
     except (AgoraError, run_state.StateError, sources.SourceError, OSError, KeyboardInterrupt) as exc:

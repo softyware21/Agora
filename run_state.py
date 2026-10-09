@@ -3,6 +3,7 @@ from contextlib import contextmanager
 import hashlib
 import json
 import os
+import copy
 
 
 class StateError(Exception):
@@ -16,9 +17,51 @@ def steps(rounds):
             + [('codex', 'summary', rounds)])
 
 
-def fingerprint(question, rules, rounds, prompt_version, source_snapshots=None):
-    data = json.dumps([question, rules, rounds, prompt_version, source_snapshots or []], ensure_ascii=False, sort_keys=True)
+def fingerprint(question, rules, rounds, prompt_version, source_snapshots=None, continuation=None):
+    values = [question, rules, rounds, prompt_version, source_snapshots or []]
+    if continuation is not None:
+        values.append(continuation)
+    data = json.dumps(values, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+
+def validate_continuation(folder, record):
+    link = record.get('continuation')
+    if link is None:
+        if record['rounds'] > 3:
+            raise ValueError('More than three rounds require a continuation.')
+        return
+    if (not isinstance(link, dict) or type(link.get('add_rounds')) is not int or not 1 <= link['add_rounds'] <= 3
+            or not isinstance(link.get('note'), str) or len(link['note']) > 8000
+            or not isinstance(link.get('parent_directory'), str)):
+        raise ValueError('Invalid continuation settings.')
+    raw = (folder / 'parent.json').read_bytes()
+    if hashlib.sha256(raw).hexdigest() != link.get('parent_sha256'):
+        raise ValueError('Parent snapshot changed.')
+    parent = json.loads(raw)
+    if (not isinstance(parent, dict) or parent.get('status') != 'completed'
+            or type(parent.get('rounds')) is not int or not 1 <= parent['rounds'] < 12
+            or record['rounds'] != parent['rounds'] + link['add_rounds']
+            or record['question'] != parent.get('question')):
+        raise ValueError('Invalid parent discussion.')
+    parent_turns = parent.get('turns')
+    if (not isinstance(parent_turns, list) or len(parent_turns) != len(steps(parent['rounds']))
+            or not all(isinstance(t, dict) for t in parent_turns)
+            or parent_turns[-1].get('phase') != 'summary' or parent.get('summary') != parent_turns[-1].get('text')):
+        raise ValueError('Incomplete parent discussion.')
+    inherited = copy.deepcopy(parent_turns[:-1])
+    for turn in inherited:
+        turn.setdefault('source_ids', [s['id'] for s in parent.get('sources', [])])
+    if link.get('inherited_turns') != len(inherited) or record['turns'][:len(inherited)] != inherited:
+        raise ValueError('Inherited answers changed.')
+    old_sources = parent.get('sources', [])
+    if record.get('sources', [])[:len(old_sources)] != old_sources:
+        raise ValueError('Inherited source snapshots changed.')
+    supplements = copy.deepcopy(parent.get('continuation', {}).get('supplements', []))
+    if link['note']:
+        supplements.append({'after_round': parent['rounds'], 'text': link['note']})
+    if link.get('supplements') != supplements or sum(len(item['text']) for item in supplements) > 16000:
+        raise ValueError('Supplement history changed.')
 
 
 def load(folder, prompt_version):
@@ -29,7 +72,7 @@ def load(folder, prompt_version):
         question, rules, rounds = record['question'], record['rules'], record['rounds']
         if (not isinstance(question, str) or not question.strip() or len(question) > 12000
                 or not isinstance(rules, str) or len(rules) > 8000
-                or type(rounds) is not int or not 1 <= rounds <= 3):
+                or type(rounds) is not int or not 1 <= rounds <= 12):
             raise ValueError('Invalid saved question, rules, or round count.')
         if record.get('prompt_version') != prompt_version:
             raise ValueError('Prompt version changed; start a new run.')
@@ -45,7 +88,7 @@ def load(folder, prompt_version):
                 if (not all(isinstance(source.get(key), str) for key in ('url', 'final_url', 'retrieved_at', 'sha256'))
                         or source['sha256'] != hashlib.sha256(source['text'].encode()).hexdigest()):
                     raise ValueError('Source snapshot changed.')
-        if record.get('config_hash') != fingerprint(question, rules, rounds, prompt_version, snapshots):
+        if record.get('config_hash') != fingerprint(question, rules, rounds, prompt_version, snapshots, record.get('continuation')):
             raise ValueError('Saved settings changed; start a new run.')
         if record.get('status') not in ('running', 'stopped', 'completed'):
             raise ValueError('Invalid run status.')
@@ -59,6 +102,10 @@ def load(folder, prompt_version):
                     or not isinstance(turn.get('text'), str)
                     or not turn['text'].strip() or len(turn['text']) > 20000):
                 raise ValueError('Turns are missing, reordered, or invalid.')
+            if 'source_ids' in turn and (not isinstance(turn['source_ids'], list)
+                    or any(not isinstance(sid, str) or sid not in {s['id'] for s in snapshots} for sid in turn['source_ids'])):
+                raise ValueError('Invalid per-turn source availability.')
+        validate_continuation(folder, record)
         if len(turns) == len(plan):
             if record.get('summary') != turns[-1]['text']:
                 raise ValueError('Summary does not match the saved turn.')

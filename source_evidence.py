@@ -59,7 +59,8 @@ def claims(text, turn_number, snapshots):
 def ledger(turns, snapshots):
     result = []
     for number, turn in enumerate(turns, 1):
-        row = claims(turn['text'], number, snapshots)
+        available = turn.get('source_ids', [s['id'] for s in snapshots])
+        row = claims(turn['text'], number, [s for s in snapshots if s['id'] in available])
         row.update(turn=number, provider=turn['provider'], phase=turn['phase'], round=turn['round'])
         raw_reviews, review_status = block(turn['text'], 'agora-source-reviews')
         prior = [r for r in result if turn['phase'] == 'summary' or r['round'] < turn['round']]
