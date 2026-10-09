@@ -55,6 +55,21 @@ the official browser/terminal flow; never paste credentials into an issue.
 If needed, set `AGORA_CODEX_PATH` or `AGORA_CLAUDE_PATH` to the official executable.
 On Windows, point to an `.exe`, not a shell wrapper.
 
+## Local interface
+
+```sh
+python web_app.py
+```
+
+On Windows, double-click `start-ui.cmd`. The page opens at `http://127.0.0.1:8765`.
+Enter a question, choose models and rounds, review the call count, then start.
+The page shows saved answers, issue outcomes, and controls to stop, resume, or
+continue a completed discussion. Closing the browser leaves the runner active.
+
+Keep the local server running while a discussion is in progress. Stop waits for
+the current answer before preventing the next call. See [using the local interface](docs/INTERFACE.md)
+for setup, recovery, and limitations.
+
 ## Model selection
 
 Select participant models and a summary provider before running:

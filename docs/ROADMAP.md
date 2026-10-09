@@ -22,6 +22,7 @@
 - Issue-level model outcomes with both latest positions and citation checks.
 - Completed-discussion continuations with preserved history, supplements, and additional sources.
 - Participant and summary model selection, saved resume settings, and offline call previews.
+- Local browser interface for setup, saved progress, stop/resume, issue outcomes, and follow-up rounds.
 
 ## Next: reproducibility
 
@@ -44,7 +45,7 @@
 
 ## User experience
 
-- Local interface for questions, rules, progress, and results.
+- Improve the local interface with model discovery and clearer evidence navigation.
 - Reusable debate configurations.
 - Clear presentation of uncertainty and unresolved disagreements.
 
