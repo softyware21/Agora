@@ -106,6 +106,25 @@ class ContinuationTests(unittest.TestCase):
                 self.assertEqual(continuation.main(), 0)
             self.assertEqual([p.name for p in Path(root).iterdir()], ['parent'])
 
+    def test_older_prompt_can_be_extended_without_rewriting_original(self):
+        with tempfile.TemporaryDirectory() as root:
+            parent = self.parent(root)
+            path = parent / 'transcript.json'
+            record = json.loads(path.read_text())
+            record['prompt_version'] = 'historical-prompt'
+            record['config_hash'] = run_state.fingerprint(record['question'], record['rules'], record['rounds'],
+                                                         record['prompt_version'], record['sources'])
+            for turn in record['turns']:
+                turn.pop('source_ids')
+            path.write_text(json.dumps(record))
+            before = path.read_bytes()
+            child = Path(root) / 'child'
+            prepared = continuation.prepare(parent, child)
+            self.assertEqual(prepared['prompt_version'], agora.prompt_version())
+            self.assertEqual(prepared['turns'][0]['source_ids'], [])
+            self.run_child(child, prepared, self.providers())
+            self.assertEqual(path.read_bytes(), before)
+
     def test_incomplete_or_single_model_parent_is_rejected(self):
         with tempfile.TemporaryDirectory() as root:
             parent = self.parent(root)
