@@ -4,23 +4,26 @@ import hashlib
 import json
 import os
 import copy
+import models
 
 
 class StateError(Exception):
     pass
 
 
-def steps(rounds):
+def steps(rounds, model_selection=None):
     return ([('codex', 'initial', 0), ('claude', 'initial', 0)]
             + [(name, 'review', number) for number in range(1, rounds + 1)
                for name in ('codex', 'claude')]
-            + [('codex', 'summary', rounds)])
+            + [(models.validate(model_selection)['summary_provider'], 'summary', rounds)])
 
 
-def fingerprint(question, rules, rounds, prompt_version, source_snapshots=None, continuation=None):
+def fingerprint(question, rules, rounds, prompt_version, source_snapshots=None, continuation=None, model_selection=None):
     values = [question, rules, rounds, prompt_version, source_snapshots or []]
     if continuation is not None:
         values.append(continuation)
+    if model_selection is not None:
+        values.append({'model_selection': models.validate(model_selection)})
     data = json.dumps(values, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(data.encode('utf-8')).hexdigest()
 
@@ -88,12 +91,14 @@ def load(folder, prompt_version):
                 if (not all(isinstance(source.get(key), str) for key in ('url', 'final_url', 'retrieved_at', 'sha256'))
                         or source['sha256'] != hashlib.sha256(source['text'].encode()).hexdigest()):
                     raise ValueError('Source snapshot changed.')
-        if record.get('config_hash') != fingerprint(question, rules, rounds, prompt_version, snapshots, record.get('continuation')):
+        selection = record.get('model_selection')
+        models.validate(selection)
+        if record.get('config_hash') != fingerprint(question, rules, rounds, prompt_version, snapshots, record.get('continuation'), selection):
             raise ValueError('Saved settings changed; start a new run.')
         if record.get('status') not in ('running', 'stopped', 'completed'):
             raise ValueError('Invalid run status.')
         turns = record['turns']
-        plan = steps(rounds)
+        plan = steps(rounds, selection)
         if not isinstance(turns, list) or len(turns) > len(plan):
             raise ValueError('Invalid turn list.')
         for turn, expected in zip(turns, plan):

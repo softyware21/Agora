@@ -275,6 +275,8 @@ def save(run_dir, record):
     lines = ["# Agora debate record", "", f"Status: {record['status']}", "",
              "> Arithmetic and quote matches are checked locally. Source support is a model judgment, not a guarantee of truth.",
              "", "## Question", record["question"], "", "## Rules", record["rules"], ""]
+    lines += ['## Models', '', models.describe(record.get('model_selection')), '',
+              'Requested settings and CLI-reported model IDs are separate. Defaults and aliases may change.', '']
     if record.get("error"):
         lines += ["## Stop reason", record.get('stop_reason') or 'unknown', record["error"], ""]
     if record.get('continuation'):
@@ -350,19 +352,31 @@ def save(run_dir, record):
         lines += [f"- {attribution.turn_id(index)}: {speaker(entry)}; full answers available: {', '.join(seen) or 'none'}"]
     lines.append('')
     for entry in record["turns"]:
-        lines += [f"## {entry['phase']} / {speaker(entry)} / round {entry['round']}", entry["text"], ""]
+        metadata = entry.get('metadata', {})
+        lines += [f"## {entry['phase']} / {speaker(entry)} / round {entry['round']}",
+                  f"Requested model: {metadata.get('requested_model') or 'CLI default / not recorded'}; "
+                  f"reported models: {', '.join(metadata.get('models', [])) or 'unavailable'}", '', entry["text"], ""]
     (run_dir / "report.md").write_text("\n".join(lines), encoding="utf-8")
 
 
-def debate(providers, question, rules, rounds, timeout, run_dir, deadline_seconds=600, resume=False, source_urls=None):
+def create_providers(cwd, selection=None):
+    settings = models.validate(selection)
+    providers = {name: Provider(name, cwd, settings[name]) for name in ('codex', 'claude')}
+    summary = settings['summary_provider']
+    providers['summary'] = Provider(summary, cwd, models.target(settings, summary, 'summary'))
+    return providers
+
+
+def debate(providers, question, rules, rounds, timeout, run_dir, deadline_seconds=600, resume=False, source_urls=None, model_selection=None):
     try:
         with run_state.locked(run_dir):
-            return _debate(providers, question, rules, rounds, timeout, run_dir, deadline_seconds, resume, source_urls)
+            return _debate(providers, question, rules, rounds, timeout, run_dir, deadline_seconds, resume, source_urls, model_selection)
     except run_state.StateError as exc:
         raise AgoraError(str(exc), "invalid_state") from None
 
 
-def _debate(providers, question, rules, rounds, timeout, run_dir, deadline_seconds, resume, source_urls):
+def _debate(providers, question, rules, rounds, timeout, run_dir, deadline_seconds, resume, source_urls, model_selection):
+    models.validate(model_selection)
     if not 1 <= rounds <= (12 if resume else 3) or not 10 <= timeout <= 600:
         raise AgoraError("Rounds must be 1-3 and per-call timeout must be 10-600 seconds.")
     if not question.strip() or len(question) > 12000 or len(rules) > 8000:
@@ -371,6 +385,9 @@ def _debate(providers, question, rules, rounds, timeout, run_dir, deadline_secon
         if source_urls:
             raise AgoraError('Cannot replace sources when resuming.', 'invalid_state')
         record = run_state.load(run_dir, prompt_version())
+        if model_selection is not None and model_selection != models.validate(record.get('model_selection')):
+            raise AgoraError('Cannot change models when resuming. Start a continuation after completion.', 'invalid_state')
+        model_selection = record.get('model_selection')
         if (question, rules, rounds) != (record['question'], record['rules'], record['rounds']):
             raise AgoraError("Cannot change question, rules, or rounds when resuming.", "invalid_state")
         if record['status'] == 'completed':
@@ -384,7 +401,19 @@ def _debate(providers, question, rules, rounds, timeout, run_dir, deadline_secon
               "verification": "not_performed", "turns": [], "summary": None,
               "schema_version": 1, "prompt_version": prompt_version(), "attempts": [],
               "sources": snapshots,
-              "config_hash": run_state.fingerprint(question, rules, rounds, prompt_version(), snapshots)}
+              "config_hash": run_state.fingerprint(question, rules, rounds, prompt_version(), snapshots, model_selection=model_selection)}
+        if model_selection is not None:
+            record['model_selection'] = model_selection
+    summary_provider = models.validate(model_selection)['summary_provider']
+
+    def routed(name, phase):
+        provider = providers.get('summary', providers[name]) if phase == 'summary' else providers[name]
+        if model_selection is not None and (provider.name != name or getattr(provider, 'model', None) != models.target(model_selection, name, phase)):
+            raise AgoraError('Provider does not match the saved model selection.', 'invalid_state')
+        return provider
+
+    for name, phase, _ in run_state.steps(rounds, model_selection)[len(record['turns']):]:
+        routed(name, phase)
     record.update(status="running", error=None, stop_reason=None)
     attempt = {"started_at": datetime.now(timezone.utc).isoformat(),
                "start_turn": len(record['turns']), "timeout": timeout,
@@ -397,6 +426,7 @@ def _debate(providers, question, rules, rounds, timeout, run_dir, deadline_secon
     if record.get('continuation'):
         parent = json.loads((run_dir / 'parent.json').read_text(encoding='utf-8'))
         continuation_context = {'note': record['continuation']['note'], 'previous_rules': parent['rules'],
+                                'previous_models': parent.get('model_selection'), 'current_models': model_selection,
                                 'supplements': record['continuation']['supplements'],
                                 'previous_summary': parent['summary'], 'previous_issue_outcomes': parent.get('issue_outcomes'),
                                 'inherited_turns': record['continuation']['inherited_turns'],
@@ -410,25 +440,28 @@ def _debate(providers, question, rules, rounds, timeout, run_dir, deadline_secon
         if remaining < 1:
             raise AgoraError("The overall execution deadline was reached.", "deadline")
         print(f"[{phase} / {round_number}] Waiting for {name}...", flush=True)
-        answer = providers[name].answer(build_prompt(question, rules, phase,
+        provider = routed(name, phase)
+        answer = provider.answer(build_prompt(question, rules, phase,
                         turn_context=attribution.context(record['turns'], phase, round_number),
                         continuation_context=continuation_context,
                         source_snapshots=record.get('sources', []), **kwargs), min(timeout, remaining))
         record["turns"].append({"provider": name, "phase": phase, "round": round_number,
                                 'source_ids': [s['id'] for s in record.get('sources', [])],
-                                "text": answer, "metadata": getattr(providers[name], 'last_metadata', {})})
+                                "text": answer, "metadata": dict(getattr(provider, 'last_metadata', {}),
+                                    requested_model=getattr(provider, 'model', None))})
         if phase == "summary":
             record["summary"] = answer
         save(run_dir, record)
         return answer
 
     try:
-        pending = run_state.steps(rounds)[len(record['turns']):]
-        for name in dict.fromkeys(step[0] for step in pending):
-            provider = providers[name]
+        pending = run_state.steps(rounds, model_selection)[len(record['turns']):]
+        for name, phase in dict.fromkeys((name, 'summary' if phase == 'summary' else 'participant') for name, phase, _ in pending):
+            provider = routed(name, phase)
             provider.check()
             if hasattr(provider, 'metadata'):
-                attempt['providers'][name] = provider.metadata()
+                attempt['providers']['summary' if phase == 'summary' else name] = dict(provider.metadata(),
+                    requested_model=getattr(provider, 'model', None))
         save(run_dir, record)
         previous = {name: call(name, "initial", 0) for name in ("codex", "claude")}
         for number in range(1, rounds + 1):
@@ -441,7 +474,7 @@ def _debate(providers, question, rules, rounds, timeout, run_dir, deadline_secon
                                      source_checks=source_evidence.ledger(prior_turns, record.get('sources', [])))
             previous = updated
         prior = [turn for turn in record['turns'] if turn['phase'] != 'summary']
-        call("codex", "summary", rounds, history=prior,
+        call(summary_provider, "summary", rounds, history=prior,
              calculation_checks=evidence.ledger(prior),
              source_checks=source_evidence.ledger(prior, record.get('sources', [])))
         record["status"] = "completed"
@@ -467,40 +500,52 @@ def main():
     parser.add_argument("--rounds", type=int)
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--deadline", type=int, default=600)
+    parser.add_argument('--plan', action='store_true', help='Preview settings and calls without login checks, downloads, or model calls')
+    models.add_arguments(parser)
     args = parser.parse_args()
     try:
         if args.resume and (args.question is not None or args.rules is not None or args.rounds is not None
-                            or args.check or args.login_claude or args.source):
+                            or args.check or args.login_claude or args.source or models.supplied(args)):
             raise AgoraError("--resume cannot be combined with new settings, --check, or --login-claude.")
         if args.resume:
             run_dir = args.resume.resolve()
             saved = run_state.load(run_dir, prompt_version())
+            selection = saved.get('model_selection')
             question, rules, rounds = saved['question'], saved['rules'], saved['rounds']
             if saved['status'] == 'completed':
                 print(f"Already completed: {run_dir / 'report.md'}")
                 return 0
         else:
             question, rules, rounds = args.question, args.rules if args.rules is not None else DEFAULT_RULES, args.rounds if args.rounds is not None else 1
+            selection = models.from_args(args)
+        if not 1 <= rounds <= (12 if args.resume else 3) or not 10 <= args.timeout <= 600 or args.deadline < 1:
+            raise AgoraError('Invalid round count, timeout, or deadline.')
+        print(models.describe(selection))
+        if not args.check and not args.login_claude:
+            pending = run_state.steps(rounds, selection)[len(saved['turns']) if args.resume else 0:]
+            print(f"This uses your subscription allowance. Remaining model calls: {len(pending)} "
+                  f"(codex {sum(n == 'codex' for n, _, _ in pending)}, claude {sum(n == 'claude' for n, _, _ in pending)}).")
+        if args.plan:
+            return 0
         if args.login_claude:
             return subprocess.call([executable("claude"), "auth", "login"], env=clean_env())
         with tempfile.TemporaryDirectory(prefix="agora-") as isolated:
-            providers = {name: Provider(name, isolated) for name in ("codex", "claude")}
+            providers = create_providers(isolated, selection)
             if args.check:
-                for name, provider in providers.items():
+                for name in ('codex', 'claude'):
+                    provider = providers[name]
                     print(f"{name}: {provider.check()}")
                 return 0
             if not args.resume:
                 question = question if question is not None else input("Enter a question to debate: ").strip()
                 run_dir = ROOT / "runs" / (datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6])
-            remaining = 3 + 2 * rounds - (len(saved['turns']) if args.resume else 0)
-            print(f"This uses your subscription allowance. Remaining model calls: {remaining}")
             print(f"Run directory: {run_dir}")
             debate(providers, question, rules, rounds, args.timeout, run_dir, args.deadline,
-                   resume=bool(args.resume), source_urls=args.source)
+                   resume=bool(args.resume), source_urls=args.source, model_selection=selection)
             print(issues.overview(json.loads((run_dir / 'transcript.json').read_text(encoding='utf-8'))['issue_outcomes']))
             print(f"Completed: {run_dir / 'report.md'}")
             return 0
-    except (AgoraError, run_state.StateError, sources.SourceError, OSError, KeyboardInterrupt) as exc:
+    except (AgoraError, run_state.StateError, sources.SourceError, OSError, ValueError, KeyboardInterrupt) as exc:
         print(f"Stopped: {exc}", file=sys.stderr)
         return 1
 

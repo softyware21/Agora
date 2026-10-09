@@ -13,6 +13,7 @@ import agora
 import issues
 import run_state
 import sources
+import models
 
 
 def parent_record(folder):
@@ -42,12 +43,13 @@ def validate(parent, add_rounds, note, rules, urls):
     return added
 
 
-def prepare(parent_folder, destination, add_rounds=1, note='', rules=None, urls=None):
+def prepare(parent_folder, destination, add_rounds=1, note='', rules=None, urls=None, model_selection=None):
     parent_folder, destination = parent_folder.resolve(), destination.resolve()
     # Read and validate under the parent lock, then never write to its transcript.
     with run_state.locked(parent_folder):
         parent, raw = parent_record(parent_folder)
     current_rules = parent['rules'] if rules is None else rules
+    selection = parent.get('model_selection') if model_selection is None else models.validate(model_selection)
     added = validate(parent, add_rounds, note, current_rules, urls or [])
     destination.mkdir(parents=True, exist_ok=False)
     with run_state.locked(destination):
@@ -72,7 +74,9 @@ def prepare(parent_folder, destination, add_rounds=1, note='', rules=None, urls=
                   'started_at': datetime.now(timezone.utc).isoformat(),
                   'stop_reason': 'ready_to_continue', 'error': None,
                   'config_hash': run_state.fingerprint(parent['question'], current_rules, rounds,
-                                                       agora.prompt_version(), snapshots, link)}
+                                                       agora.prompt_version(), snapshots, link, selection)}
+        if selection is not None:
+            record['model_selection'] = selection
         agora.save(destination, record)
         run_state.load(destination, agora.prompt_version())
     return record
@@ -88,24 +92,28 @@ def main():
     parser.add_argument('--plan', action='store_true', help='Preview calls and changes without model calls or downloads')
     parser.add_argument('--timeout', type=int, default=180)
     parser.add_argument('--deadline', type=int, default=600)
+    models.add_arguments(parser)
     args = parser.parse_args()
     try:
         if not 10 <= args.timeout <= 600 or args.deadline < 1:
             raise ValueError('Timeout must be 10-600 seconds and deadline must be positive.')
         parent, _ = parent_record(args.parent)
+        selection = models.from_args(args, parent.get('model_selection'))
         rules = parent['rules'] if args.rules is None else args.rules
         added = validate(parent, args.add_rounds, args.note, rules, args.source)
+        summary = selection['summary_provider']
+        print(models.describe(selection))
         print(f'Additional model calls: {2 * args.add_rounds + 1} '
-              f'(codex {args.add_rounds + 1}, claude {args.add_rounds}).')
+              f"(codex {args.add_rounds + (summary == 'codex')}, claude {args.add_rounds + (summary == 'claude')}).")
         print(f'New source URLs: {len(added)}; rules changed: {rules != parent["rules"]}; supplement: {bool(args.note)}')
         print(issues.overview(issues.ledger(parent['turns'])))
         if args.plan:
             return 0
         destination = agora.ROOT / 'runs' / ('continued-' + datetime.now().strftime('%Y%m%d-%H%M%S') + '-' + uuid.uuid4().hex[:6])
         print(f'Continuation directory: {destination}', flush=True)
-        record = prepare(args.parent, destination, args.add_rounds, args.note, args.rules, args.source)
+        record = prepare(args.parent, destination, args.add_rounds, args.note, args.rules, args.source, selection)
         with tempfile.TemporaryDirectory(prefix='agora-continue-') as isolated:
-            providers = {n: agora.Provider(n, isolated) for n in ('codex', 'claude')}
+            providers = agora.create_providers(isolated, selection)
             result = agora.debate(providers, record['question'], record['rules'], record['rounds'], args.timeout,
                                   destination, deadline_seconds=args.deadline, resume=True)
         print(issues.overview(result['issue_outcomes']))
