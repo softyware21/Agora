@@ -31,17 +31,23 @@
         <label for="question">Your question</label>
         <textarea id="question" rows="4" maxlength="12000" required placeholder="Describe a decision, challenge an assumption, or examine a proposal…"></textarea>
         <div id="note-wrap" hidden><label for="note">New information or focus</label><textarea id="note" rows="3" maxlength="8000" placeholder="What should the next round reconsider?"></textarea></div>
+        <p class="hint">Ready with GPT and Claude defaults. Change the options only if you need to.</p>
+        <details id="model-settings" class="settings"><summary>Models & rounds</summary>
         <div class="section-label">THE TABLE</div>
         <div class="participants">
-          <div class="participant"><span class="avatar">G</span><div><h2>GPT <small>via Codex</small></h2><label for="codex-model">Participant model</label><input id="codex-model" maxlength="128" placeholder="CLI default" autocomplete="off"></div></div>
-          <div class="participant"><span class="avatar clay">C</span><div><h2>Claude <small>via Claude Code</small></h2><label for="claude-model">Participant model</label><input id="claude-model" maxlength="128" placeholder="CLI default" autocomplete="off"></div></div>
+          <div class="participant"><span class="avatar">G</span><div><h2>GPT <small>via Codex</small></h2><label for="codex-model">Participant model</label><select id="codex-model"></select><div id="codex-custom-wrap" hidden><label for="codex-custom">Custom model ID</label><input id="codex-custom" maxlength="128" autocomplete="off"></div></div></div>
+          <div class="participant"><span class="avatar clay">C</span><div><h2>Claude <small>via Claude Code</small></h2><label for="claude-model">Participant model</label><select id="claude-model"></select><div id="claude-custom-wrap" hidden><label for="claude-custom">Custom model ID</label><input id="claude-custom" maxlength="128" autocomplete="off"></div></div></div>
         </div>
-        <div class="row three">
+        <div class="row">
           <div><label for="rounds" id="rounds-label">Review rounds</label><select id="rounds"><option value="1">1 round</option><option value="2">2 rounds</option><option value="3">3 rounds</option></select></div>
           <div><label for="summary-provider">Summary by</label><select id="summary-provider"><option value="codex">GPT / Codex</option><option value="claude">Claude</option></select></div>
-          <div><label for="summary-model">Summary model</label><input id="summary-model" maxlength="128" placeholder="Same as participant" autocomplete="off"></div>
+
         </div>
-        <p class="hint">Enter a model ID or alias supported by your signed-in account. Leave blank to use the defaults.</p>
+        <p class="hint">Suggested choices, not an account availability check. Your subscription and installed tools determine access.</p>
+        <details class="settings"><summary>Advanced model selection</summary>
+          <label for="summary-model">Summary model</label><select id="summary-model"></select>
+          <div id="summary-custom-wrap" hidden><label for="summary-custom">Custom model ID</label><input id="summary-custom" maxlength="128" autocomplete="off"></div>
+        </details></details>
         <details class="settings"><summary>Rules, sources & timing</summary>
           <label for="rules">Discussion rules</label><textarea id="rules" rows="3" maxlength="8000"></textarea>
           <label for="sources">Source URLs <span class="optional">optional · one per line</span></label><textarea id="sources" rows="2" placeholder="https://example.org/document"></textarea>

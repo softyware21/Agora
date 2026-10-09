@@ -1,4 +1,22 @@
 const korean = {
+  "Ready with GPT and Claude defaults. Change the options only if you need to.": "GPT와 Claude 기본 모델로 준비되어 있습니다. 주제만 입력해 시작할 수 있어요.",
+  "Models & rounds": "모델 및 라운드 설정",
+  "Advanced model selection": "고급 모델 설정",
+  "Custom model ID": "직접 입력할 모델 ID",
+  "Custom…": "직접 입력…",
+  "Default model": "기본 모델",
+  "Suggested choices, not an account availability check. Your subscription and installed tools determine access.": "선택을 돕기 위한 목록입니다. 실제 사용 가능 여부는 구독과 설치된 도구에 따라 달라집니다.",
+  "GPT-6.1 Sol · general use": "GPT-6.1 Sol · 일반적인 검토",
+  "GPT-6 Astra · demanding analysis": "GPT-6 Astra · 복잡한 분석",
+  "GPT-6 Luna · lighter tasks": "GPT-6 Luna · 간단한 작업",
+  "Claude Sonnet · balanced": "Claude Sonnet · 균형형",
+  "Claude Opus · deeper analysis": "Claude Opus · 심층 분석",
+  "Claude Haiku · faster responses": "Claude Haiku · 빠른 응답",
+  "Revisit this issue": "이 쟁점 이어서 검토",
+  "Add evidence": "근거 보충하기",
+  "Verification data": "검증용 데이터",
+  "Source text": "원문 보기",
+  "Record: {id}": "기록: {id}",
   "Language": "언어",
   "A place to think it through.": "함께 생각을 깊이 나누는 곳.",
   "+ New discussion": "+ 새 토론",
@@ -127,8 +145,8 @@ function phaseLabel(phase) {
 function describeModels(selection) {
   const model = selection || {}, provider = model.summary_provider || 'codex';
   return t('GPT: {gpt} · Claude: {claude} · Summary: {provider} / {model}', {
-    gpt: model.codex || t('CLI default'), claude: model.claude || t('CLI default'),
-    provider, model: model.summary_model || model[provider] || t('CLI default')});
+    gpt: model.codex || t('Default model'), claude: model.claude || t('Default model'),
+    provider, model: model.summary_model || model[provider] || t('Default model')});
 }
 const $ = id => document.getElementById(id);
 const token = document.querySelector('meta[name="agora-token"]').content;
@@ -153,9 +171,29 @@ function node(tag, text, className) {
 function error(message) { $('error').textContent = t(message); $('error').hidden = !message; }
 async function act(work) { error(''); try { await work(); } catch (e) { error(e.message); } }
 function invalidate() { planPayload = null; $('plan').hidden = true; }
+const modelChoices = {
+  codex: [['gpt-6.1-sol', 'GPT-6.1 Sol · general use'], ['gpt-6-astra', 'GPT-6 Astra · demanding analysis'], ['gpt-6-luna', 'GPT-6 Luna · lighter tasks']],
+  claude: [['sonnet', 'Claude Sonnet · balanced'], ['opus', 'Claude Opus · deeper analysis'], ['haiku', 'Claude Haiku · faster responses']]
+};
+function modelValue(kind) {
+  const value = $(`${kind}-model`).value;
+  return (value === '__custom' ? $(`${kind}-custom`).value.trim() : value) || null;
+}
+function fillModels(kind, provider, value = null) {
+  const select = $(`${kind}-model`), choices = modelChoices[provider];
+  select.replaceChildren();
+  for (const [id, label] of [['', kind === 'summary' ? 'Same as participant' : 'Default model'], ...choices, ['__custom', 'Custom…']]) {
+    const option = node('option', t(label)); option.value = id; select.append(option);
+  }
+  const custom = value && !choices.some(([id]) => id === value);
+  select.value = custom ? '__custom' : value || '';
+  $(`${kind}-custom`).value = custom ? value : '';
+  $(`${kind}-custom-wrap`).hidden = !custom;
+  $(`${kind}-custom`).required = !!custom;
+}
 function selection() {
-  return {codex: $('codex-model').value.trim() || null, claude: $('claude-model').value.trim() || null,
-    summary_provider: $('summary-provider').value, summary_model: $('summary-model').value.trim() || null};
+  return {codex: modelValue('codex'), claude: modelValue('claude'),
+    summary_provider: $('summary-provider').value, summary_model: modelValue('summary')};
 }
 function payload() {
   return {mode, parent, question: $('question').value, rules: $('rules').value, rounds: Number($('rounds').value),
@@ -173,8 +211,10 @@ function edit(nextMode = 'new', record = null, id = null) {
   $('rounds').value = mode === 'resume' ? String(record.rounds) : '1';
   $('rounds-label').textContent = mode === 'continue' ? t('Additional review rounds') : t('Review rounds');
   const models = record?.model_selection || {};
-  $('codex-model').value = models.codex || ''; $('claude-model').value = models.claude || '';
-  $('summary-provider').value = models.summary_provider || 'codex'; $('summary-model').value = models.summary_model || '';
+  $('summary-provider').value = models.summary_provider || 'codex';
+  fillModels('codex', 'codex', models.codex); fillModels('claude', 'claude', models.claude);
+  fillModels('summary', $('summary-provider').value, models.summary_model);
+  $('model-settings').open = mode !== 'new';
   $('timeout').value = '180'; $('deadline').value = '600';
   for (const control of $('setup').querySelectorAll('input,textarea,select')) control.disabled = mode === 'resume' && !['timeout','deadline'].includes(control.id);
   $('start').textContent = mode === 'new' ? t('Start discussion →') : mode === 'resume' ? t('Resume discussion →') : t('Start follow-up →');
@@ -279,7 +319,15 @@ $('new').onclick = () => edit();
 $('back-setup').onclick = () => { selected = null; $('editor').hidden = false; $('discussion').hidden = true; renderHistory(); };
 $('view-active').onclick = () => act(() => openRun(state.job.run_id));
 $('setup').addEventListener('input', invalidate);
-$('summary-provider').addEventListener('change', () => { $('summary-model').value = ''; invalidate(); });
+$('summary-provider').addEventListener('change', () => { fillModels('summary', $('summary-provider').value); invalidate(); });
+for (const kind of ['codex', 'claude', 'summary']) {
+  $(`${kind}-model`).addEventListener('change', () => {
+    const custom = $(`${kind}-model`).value === '__custom';
+    $(`${kind}-custom-wrap`).hidden = !custom; $(`${kind}-custom`).required = custom;
+    if (custom) $(`${kind}-custom`).focus();
+    invalidate();
+  });
+}
 $('setup').onsubmit = event => { event.preventDefault(); act(async () => {
   const requested = payload(), planned = await api('/api/plan', requested);
   if (JSON.stringify(requested) !== JSON.stringify(payload())) return;
@@ -311,6 +359,7 @@ while (walker.nextNode()) {
 const staticAttributes = [...document.querySelectorAll('[placeholder], [aria-label]')].flatMap(element =>
   ['placeholder', 'aria-label'].filter(name => element.hasAttribute(name)).map(name => [element, name, element.getAttribute(name)]));
 function setLanguage(value) {
+  const savedModels = selection();
   language = value;
   try { localStorage.setItem('agora.language', value); } catch (_) { /* Keep the selection for this page. */ }
   document.documentElement.lang = value;
@@ -324,6 +373,8 @@ function setLanguage(value) {
   $('editor-intro').textContent = t(mode === 'new' ? 'Give two models something to work through. See where they agree, where they differ, and what still needs evidence.' : mode === 'resume' ? 'Completed answers and model settings stay in place. Only unfinished calls will run.' : 'Add new information or change the conditions. Earlier answers stay in the original record.');
   $('rounds-label').textContent = t(mode === 'continue' ? 'Additional review rounds' : 'Review rounds');
   $('start').textContent = t(mode === 'new' ? 'Start discussion →' : mode === 'resume' ? 'Resume discussion →' : 'Start follow-up →');
+  fillModels('codex', 'codex', savedModels.codex); fillModels('claude', 'claude', savedModels.claude);
+  fillModels('summary', savedModels.summary_provider, savedModels.summary_model);
   historySignature = ''; detailSignature = ''; renderHistory();
   if (detail && selected === detail.id) renderDetail(detail);
   if (planPayload) {
