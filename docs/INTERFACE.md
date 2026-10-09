@@ -12,12 +12,20 @@ Windows users can open `start-ui.cmd`. The server binds only to `127.0.0.1` and
 opens the browser. Use `--no-browser` to open the printed address yourself, or
 `--port 8766` if the default port is already in use.
 
+Opening `web/index.html` directly displays launch instructions instead of the
+discussion form. Start the server and use its printed address. The shortcut link
+in those instructions uses port 8765; use the printed address for other ports.
+
 ## Start a discussion
 
-1. Enter a question and choose participant models, review rounds, and a summary provider.
+1. Enter a question. Default models and one review round are ready to use.
+   Open **Models & rounds** to choose named participant models, review rounds,
+   or a summary provider. The summary follows that participant unless you choose
+   another model under **Advanced model selection**.
 2. Open **Rules, sources & timing** for discussion rules, public HTTPS sources,
-   and execution limits. Model names are free-text IDs or aliases; account
-   availability is checked by the provider when a call is made.
+   and execution limits. Choose **Custom…** in a model menu to enter another ID
+   or alias. The menus are curated suggestions, not a live account catalog; the
+   provider checks account availability when a call is made.
 3. Select **Review setup**. The preview makes no model calls or source downloads.
    It shows the planned calls for each provider. Remaining subscription allowance
    is shown as unavailable; call counts do not estimate it.
@@ -34,8 +42,11 @@ in their original language. Questions and answers may use any language.
 ## Progress, stop, and recovery
 
 The page refreshes progress automatically and shows each answer after it is saved.
-Responses appear as plain text, including Markdown notation and declared evidence
-blocks. Model-generated HTML is never executed.
+Answers format headings, bold text, inline code, flat lists, simple tables, and
+HTTP(S) links. Declared Agora evidence blocks stay collapsed. **Source text** shows
+the complete original answer, including unsupported Markdown. Nested lists are
+flattened in the formatted view. Model-generated HTML is displayed as text, never
+executed; images and other remote resources are not loaded.
 
 **Stop after current answer** lets the current call finish and saves its answer,
 then prevents the next call. It can take up to the per-answer timeout, plus login
@@ -64,6 +75,10 @@ counts. Expand cited positions, the final summary, or individual answers. Quote
 checks and model judgments remain separate; neither establishes factual truth.
 Download the Markdown report from the discussion view.
 
+**Revisit this issue** and **Add evidence** open a follow-up form with that
+issue's topic, reason, and next step in the editable note. The latter also opens
+the source field. Review the note and additional call count before starting.
+
 **Continue discussion** opens a follow-up form. Add information, new sources, or
 different rules and models, then preview the additional calls. The original
 question remains fixed. A new directory preserves the original transcript and
@@ -81,7 +96,8 @@ limits of five sources and twelve total review rounds still apply.
   publish its port or put it behind a public proxy.
 - The sidebar lists immediate run directories. Evaluation batches and single-model
   comparison arms should be managed with their original commands.
-- Older or damaged records may be unreadable. Keep their original files; the
+- The sidebar shows dates for readable records and folder IDs for unreadable ones.
+  Older or damaged records may be unreadable. Keep their original files; the
   interface does not migrate or delete them.
 - The page does not stream partial model output or fetch a model catalog. Saved
   answers, CLI-reported model names, and explicit model IDs remain available.

@@ -75,3 +75,20 @@ preserves the old configuration. Model changes apply only to new calls.
 
 The evaluation commands currently use CLI defaults and their existing fixed
 routing. These model options apply to `agora.py` and `continue_debate.py`.
+
+## Interface choices
+
+The local interface offers a default option, named suggestions, and a custom ID
+field. GPT suggestions use explicit IDs; Claude suggestions use the `sonnet`,
+`opus`, and `haiku` aliases. Changing the summary provider resets its separate
+model to follow the participant. Saved custom IDs survive continuation and
+language changes.
+
+The suggestions are maintained in `web/app.js`, based on the
+[OpenAI model catalog](https://developers.openai.com/api/docs/models) and
+[Claude Code model configuration](https://code.claude.com/docs/en/model-config),
+reviewed on 2026-10-10. Inclusion does not guarantee access through a particular
+subscription or CLI version. These choices do not query account entitlements,
+measure remaining allowance, or enable API billing. Use the default option if
+unsure; an unavailable selection reports the provider error without silently
+switching models.

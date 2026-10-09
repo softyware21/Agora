@@ -419,4 +419,7 @@ function setLanguage(value) {
 }
 $('language').onchange = () => setLanguage($('language').value);
 setLanguage(language);
-poll(); setInterval(poll, 1500);
+if (location.protocol === 'file:') {
+  $('launch-help').hidden = false;
+  document.querySelector('.sidebar').hidden = true; document.querySelector('main').hidden = true;
+} else { poll(); setInterval(poll, 1500); }
