@@ -60,3 +60,11 @@ class EvidenceTests(unittest.TestCase):
         checks = evidence.ledger(turns)
         self.assertEqual(checks[0]['checks'][0]['id'], 'T001-C01')
         self.assertEqual(checks[1]['checks'][0]['id'], 'T002-C01')
+
+    def test_windows_line_endings(self):
+        result = evidence.check_answer(answer([claim()]).replace('\n', '\r\n'), 1)
+        self.assertEqual(result['checks'][0]['status'], 'arithmetic_match')
+
+    def test_duplicate_fields_make_block_invalid(self):
+        text = '```agora-calculations\n[{"expected":"5", "expected":"4"}]\n```'
+        self.assertEqual(evidence.check_answer(text, 1)['status'], 'invalid')

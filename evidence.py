@@ -4,9 +4,18 @@ import re
 
 from calculator import calculate, CalculationError, VERSION
 
-DECLARATIONS = re.compile(r'^```agora-calculations[ \t]*\r?\n(.*?)^```[ \t]*$', re.MULTILINE | re.DOTALL)
+DECLARATIONS = re.compile(r'^```agora-calculations[ \t]*\r?\n(.*?)^```[ \t]*\r?$', re.MULTILINE | re.DOTALL)
 NUMBER = r'[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)'
 EXPECTED = re.compile(rf'{NUMBER}(?:\s*/\s*{NUMBER})?\Z')
+
+
+def unique_fields(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError('Duplicate field.')
+        result[key] = value
+    return result
 
 
 def check_answer(text, turn_number):
@@ -18,7 +27,7 @@ def check_answer(text, turn_number):
         result.update(status='invalid', warnings=['Expected one closed calculation block.'])
         return result
     try:
-        claims = json.loads(blocks[0])
+        claims = json.loads(blocks[0], object_pairs_hook=unique_fields)
     except (ValueError, RecursionError):
         result.update(status='invalid', warnings=['Calculation block is not valid JSON.'])
         return result
