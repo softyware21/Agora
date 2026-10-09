@@ -261,6 +261,11 @@ def speaker(turn):
 
 
 def save(run_dir, record):
+    with run_state.io_lock:
+        _save(run_dir, record)
+
+
+def _save(run_dir, record):
     run_dir.mkdir(parents=True, exist_ok=True)
     # Rebuild from the saved answers, never from a model's verdict or a cached ledger.
     record['calculation_checks'] = evidence.ledger(record['turns'])

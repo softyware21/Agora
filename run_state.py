@@ -5,6 +5,11 @@ import json
 import os
 import copy
 import models
+import threading
+
+
+# Windows readers can block atomic file replacement within the same process.
+io_lock = threading.RLock()
 
 
 class StateError(Exception):
@@ -68,6 +73,11 @@ def validate_continuation(folder, record):
 
 
 def load(folder, prompt_version):
+    with io_lock:
+        return _load(folder, prompt_version)
+
+
+def _load(folder, prompt_version):
     try:
         record = json.loads((folder / 'transcript.json').read_text(encoding='utf-8'))
         if not isinstance(record, dict) or record.get('schema_version') != 1:
