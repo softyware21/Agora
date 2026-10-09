@@ -1,0 +1,50 @@
+[
+  {
+    "id": "compound-change",
+    "category": "arithmetic",
+    "question": "A price is initially 100 units. It rises by 20%, then falls by 20% of the new price. What is the final price, and is it equal to the initial price?",
+    "fields": {"final_price": "number", "unchanged": ["yes", "no"]},
+    "expected": {"final_price": "96", "unchanged": "no"},
+    "rationale": "100 * 1.2 * 0.8 = 96. The percentage changes use different bases."
+  },
+  {
+    "id": "discount-premise",
+    "category": "false_premise",
+    "question": "An invoice starts at 3000 units. A discount of 16.7% is applied. The accountant says the discount is exactly 500 units and the amount due is 2500. Is that claim correct? Give the exact discount and amount due.",
+    "fields": {"claim_correct": ["yes", "no"], "discount": "number", "amount_due": "number"},
+    "expected": {"claim_correct": "no", "discount": "501", "amount_due": "2499"},
+    "rationale": "3000 * 16.7 / 100 = 501, leaving 2499."
+  },
+  {
+    "id": "weighted-rate",
+    "category": "arithmetic",
+    "question": "Group A has 10 successes in 10 trials. Group B has 0 successes in 90 trials. What is the combined success rate, expressed as a percentage from 0 to 100? Is averaging the two group percentages without weights valid here?",
+    "fields": {"percent": "number", "unweighted_valid": ["yes", "no"]},
+    "expected": {"percent": "10", "unweighted_valid": "no"},
+    "rationale": "10 successes out of 100 trials is 10%. Unequal group sizes require weighting."
+  },
+  {
+    "id": "missing-denominator",
+    "category": "insufficient_information",
+    "question": "A service reports 12 failures during a day. No total request count or other data is available. Can its exact failure rate be calculated? If yes, give the percentage; otherwise put unknown in percent.",
+    "fields": {"answerability": ["determined", "underdetermined"], "percent": "number_or_unknown"},
+    "expected": {"answerability": "underdetermined", "percent": "unknown"},
+    "rationale": "The denominator is missing. A count alone does not determine a rate."
+  },
+  {
+    "id": "converse-error",
+    "category": "logic",
+    "question": "Assume every approved request has a signature. Request R has a signature. Does it follow from these facts alone that R is approved? Is a signed but unapproved request consistent with the premise?",
+    "fields": {"approval_follows": ["yes", "no"], "counterexample_consistent": ["yes", "no"]},
+    "expected": {"approval_follows": "no", "counterexample_consistent": "yes"},
+    "rationale": "Approved implies signed, but signed does not imply approved."
+  },
+  {
+    "id": "evidence-scope",
+    "category": "evidence_scope",
+    "question": "Treat this as a fictional study, with no other evidence: 'Among 20 volunteers in a seven-day pilot, no failures were observed.' A reviewer concludes that the product can never fail for any user. Does the quoted passage establish that conclusion? Does it establish that no failures were observed in the pilot?",
+    "fields": {"universal_claim_supported": ["yes", "no"], "pilot_claim_supported": ["yes", "no"]},
+    "expected": {"universal_claim_supported": "no", "pilot_claim_supported": "yes"},
+    "rationale": "A finite observation supports the reported observation, not a universal guarantee."
+  }
+]
