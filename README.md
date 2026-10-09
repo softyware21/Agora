@@ -3,15 +3,16 @@
 Automated, rule-driven debates between Codex and Claude Code, using locally
 installed official CLIs and your own subscription login.
 
-**Status: early prototype.** Agora checks declared arithmetic locally. It does not
-verify inputs or claims against external sources. Agreement between models is not proof.
+**Status: early prototype.** Agora checks declared arithmetic and matches quotations
+against supplied source snapshots. Models assess whether those quotations support
+the claims. Neither a quote match nor agreement between models is proof.
 
 ## How it works
 
-1. Give Agora a question and optional discussion rules.
+1. Give Agora a question, optional discussion rules, and optional source URLs.
 2. Codex and Claude independently produce initial answers.
 3. Each participant reviews the other participant's previous answer and revises
-   its position. Both see the previous round and its calculation checks, not the
+   its position. Both see the previous round and its evidence checks, not the
    other's new response.
 4. After one to three rounds, Codex writes a final summary.
 5. Agora saves a Markdown report and a JSON transcript after each completed turn.
@@ -62,7 +63,8 @@ python agora.py --question "Review this plan" --rules "Separate evidence from as
 
 Defaults: one review round, 180 seconds per generation, 600-second overall generation
 deadline. Set `--timeout` and `--deadline` to change them. Authentication checks and
-cleanup can add overhead. Press Ctrl+C to stop. No automatic retries or API fallback.
+cleanup can add overhead. Source retrieval also happens before the generation deadline.
+Press Ctrl+C to stop. No automatic retries or API fallback.
 
 To continue a stopped run:
 
@@ -101,6 +103,27 @@ is flagged. A matching result does not establish that 3,000 was the right input 
 that the surrounding claim is true. Calculations not declared by the model are not
 checked. See [the format and limits](docs/CALCULATIONS.md).
 
+## Source checks
+
+Pass a public document with `--source`; repeat the option for up to five URLs:
+
+```sh
+python agora.py --question "Which domains does this RFC reserve for examples?" --source https://www.rfc-editor.org/rfc/rfc2606.txt
+```
+
+Agora downloads each document once and gives both models the same text. It checks
+whether declared quotations appear in that snapshot. Reviewers then assess whether
+the quoted passages support or contradict the linked claims. The report labels
+those assessments as model judgments, separately from quote matches.
+
+Only public HTTPS HTML and plain text documents are supported. URLs cannot include
+credentials, query strings, or nonstandard ports. Pages requiring login, JavaScript,
+or PDF extraction are not supported. There is no automatic web search.
+
+Snapshots are saved locally with retrieval dates and text hashes. Resume reuses them
+without downloading again; start a new run to change sources or use the current
+prompt version. See [source formats, limits, and privacy](docs/SOURCES.md).
+
 ## Subscription usage and security
 
 Agora consumes your subscription allowance. It does not provide unlimited usage
@@ -119,8 +142,8 @@ is not affiliated with or endorsed by OpenAI or Anthropic.
 
 ## Limitations
 
-- No web interface or external source checking.
-- No claim-level verification or remaining-allowance dashboard.
+- No web interface, automatic source discovery, or remaining-allowance dashboard.
+- Quote matches do not establish source reliability or whether a claim is true.
 - Arithmetic checks cover explicit declarations, not every number in the answer.
 - Codex writes the summary, which can introduce summarization bias.
 - CLI models and features may differ from the providers' web applications.

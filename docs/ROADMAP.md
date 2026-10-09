@@ -10,6 +10,8 @@
 - Resume from the first missing turn, with transcript checks and one-writer locking.
 - Per-attempt CLI versions, reported model names, and stop reasons.
 - Exact arithmetic checks for declared calculations, passed into peer review.
+- Public source snapshots shared by both participants and preserved on resume.
+- Quote matching and separate model assessments of source support.
 
 ## Next: reproducibility
 
@@ -21,7 +23,8 @@
 ## Evidence and evaluation
 
 - Track claims, assumptions, objections, and sources.
-- Add source retrieval and check that source passages support their linked claims.
+- Add source discovery and evaluate the reliability and currency of retrieved sources.
+- Evaluate how accurately reviewers judge whether passages support linked claims.
 - Improve calculation coverage beyond model-declared expressions.
 - Keep agreement separate from evidence status.
 - Compare against individual models using fixed evaluation cases.
