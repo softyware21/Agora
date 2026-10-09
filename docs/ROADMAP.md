@@ -9,6 +9,7 @@
 - Unit tests and a successful live five-call debate.
 - Resume from the first missing turn, with transcript checks and one-writer locking.
 - Per-attempt CLI versions, reported model names, and stop reasons.
+- Exact arithmetic checks for declared calculations, passed into peer review.
 
 ## Next: reproducibility
 
@@ -20,7 +21,8 @@
 ## Evidence and evaluation
 
 - Track claims, assumptions, objections, and sources.
-- Add deterministic calculations and source retrieval.
+- Add source retrieval and check that source passages support their linked claims.
+- Improve calculation coverage beyond model-declared expressions.
 - Keep agreement separate from evidence status.
 - Compare against individual models using fixed evaluation cases.
 - Include false premises and questions that cannot be resolved.

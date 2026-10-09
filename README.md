@@ -3,15 +3,16 @@
 Automated, rule-driven debates between Codex and Claude Code, using locally
 installed official CLIs and your own subscription login.
 
-**Status: early prototype.** Agora automates answer exchange; it does not yet
-verify claims against external sources. Agreement between models is not proof.
+**Status: early prototype.** Agora checks declared arithmetic locally. It does not
+verify inputs or claims against external sources. Agreement between models is not proof.
 
 ## How it works
 
 1. Give Agora a question and optional discussion rules.
 2. Codex and Claude independently produce initial answers.
 3. Each participant reviews the other participant's previous answer and revises
-   its position. Both see the previous round, not the other's new response.
+   its position. Both see the previous round and its calculation checks, not the
+   other's new response.
 4. After one to three rounds, Codex writes a final summary.
 5. Agora saves a Markdown report and a JSON transcript after each completed turn.
 
@@ -89,6 +90,17 @@ Results are saved to `runs/<run-id>/report.md` and `transcript.json`. Failed run
 retain completed turns and are marked `stopped`. Histories are local, plaintext
 files excluded from Git.
 
+## Calculation checks
+
+Participants append an expression and expected result for each calculation. Agora
+evaluates these locally using exact fractions, then passes the results to the next
+review. The report keeps matches, mismatches, and unverified entries by turn.
+
+For example, `3000 * 16.7 / 100` evaluates to `501`, so an expected result of `500`
+is flagged. A matching result does not establish that 3,000 was the right input or
+that the surrounding claim is true. Calculations not declared by the model are not
+checked. See [the format and limits](docs/CALCULATIONS.md).
+
 ## Subscription usage and security
 
 Agora consumes your subscription allowance. It does not provide unlimited usage
@@ -107,8 +119,9 @@ is not affiliated with or endorsed by OpenAI or Anthropic.
 
 ## Limitations
 
-- No web interface, external source checking, or deterministic calculator.
+- No web interface or external source checking.
 - No claim-level verification or remaining-allowance dashboard.
+- Arithmetic checks cover explicit declarations, not every number in the answer.
 - Codex writes the summary, which can introduce summarization bias.
 - CLI models and features may differ from the providers' web applications.
 
