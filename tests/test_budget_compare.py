@@ -71,6 +71,9 @@ class BudgetTests(unittest.TestCase):
                 self.assertEqual(actual, expected)
             # Codex-only starts after its three mixed-arm calls, with fresh initial context.
             self.assertNotIn('peer_previous_answer', providers['codex'].calls[3])
+            self.assertEqual(providers['claude'].calls[2]['execution_context']['participants'],
+                             {'participant_A': 'claude', 'participant_B': 'claude'})
+            self.assertEqual(providers['claude'].calls[-1]['debate_history'][0]['provider'], 'participant_A')
             self.assertTrue(providers['codex'].calls[5]['peer_previous_answer'].startswith('codex'))
             self.assertTrue(providers['claude'].calls[4]['peer_previous_answer'].startswith('claude'))
             scores = json.loads((folder / 'scores.json').read_text())

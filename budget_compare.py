@@ -13,11 +13,22 @@ import evaluation
 import run_state
 
 ARMS = ('mixed', 'codex-only', 'claude-only')
+LABELS = {'codex': 'participant_A', 'claude': 'participant_B'}
+
+
+def neutral_roles(value):
+    if isinstance(value, list):
+        return [neutral_roles(item) for item in value]
+    if isinstance(value, dict):
+        return {key: LABELS.get(item, item) if key == 'provider' and isinstance(item, str)
+                else neutral_roles(item) for key, item in value.items()}
+    return value
 
 
 class RoutedProvider:
-    def __init__(self, provider, name):
+    def __init__(self, provider, name, role, arm):
         self.provider, self.name = provider, name
+        self.role, self.arm = role, arm
         self.last_metadata = {}
 
     def check(self):
@@ -27,8 +38,19 @@ class RoutedProvider:
         return dict(self.provider.metadata(), actual_provider=self.name)
 
     def answer(self, prompt, timeout):
+        prefix, payload = prompt.split('INPUT_JSON:\n', 1)
+        data = neutral_roles(json.loads(payload))
+        data['execution_context'] = {
+            'speaker': LABELS[self.role],
+            'participants': {LABELS[r]: r if self.arm == 'mixed' else self.name for r in LABELS},
+            'same_provider': self.arm != 'mixed'}
+        prompt = (prefix + 'Use participant_A and participant_B for speaker attribution. '
+                  'The execution_context identifies the actual providers. Role labels do not imply different models. '
+                  'Do not describe same-provider agreement as cross-model corroboration.\nINPUT_JSON:\n'
+                  + json.dumps(data, ensure_ascii=False))
         text = self.provider.answer(prompt, timeout)
-        self.last_metadata = dict(self.provider.last_metadata, actual_provider=self.name)
+        self.last_metadata = dict(self.provider.last_metadata, actual_provider=self.name,
+                                  participant=LABELS[self.role], routing_version=2)
         return text
 
 
@@ -38,14 +60,14 @@ def create(folder, cases, rounds=1):
     children = {}
     for arm in ARMS:
         children[arm] = evaluate.create_batch(folder / arm, cases, rounds)['fingerprint']
-    config = {'version': 1, 'children': children}
+    config = {'version': 2, 'children': children}
     config['fingerprint'] = evaluate.digest(config)
     evaluate.write_json(folder / 'comparison.json', config)
 
 
 def load(folder):
     config = json.loads((folder / 'comparison.json').read_text(encoding='utf-8'))
-    if (not isinstance(config, dict) or config.get('version') != 1
+    if (not isinstance(config, dict) or config.get('version') not in (1, 2)
             or config.get('fingerprint') != evaluate.digest({k: v for k, v in config.items() if k != 'fingerprint'})
             or set(config.get('children', {})) != set(ARMS)):
         raise ValueError('Invalid comparison settings.')
@@ -60,6 +82,7 @@ def load(folder):
 
 def arm_records(folder, manifests):
     saved = {arm: evaluate.records(folder / arm, manifests[arm]) for arm in ARMS}
+    version = json.loads((folder / 'comparison.json').read_text(encoding='utf-8'))['version']
     for arm in ARMS:
         for record in saved[arm].values():
             if not record:
@@ -68,6 +91,8 @@ def arm_records(folder, manifests):
                 expected = turn['provider'] if arm == 'mixed' else arm.removesuffix('-only')
                 if turn.get('metadata', {}).get('actual_provider') != expected:
                     raise ValueError('Saved response routing does not match this comparison arm.')
+                if version == 2 and turn.get('metadata', {}).get('routing_version') != 2:
+                    raise ValueError('Saved routing prompt version changed.')
     return saved
 
 
@@ -79,7 +104,10 @@ def report(folder, manifests):
         notice = (f'> Comparison arm: {arm}. Provider names below are role labels. '
                   'In a single-model arm both roles, including the summary, use the named provider. '
                   'Resume through budget_compare.py at the parent directory.\n\n')
-        path.write_text(notice + path.read_text(encoding='utf-8'), encoding='utf-8')
+        text = path.read_text(encoding='utf-8')
+        text = text.replace('Codex initial', 'Participant A initial').replace('Claude initial', 'Participant B initial')
+        text = text.replace('is written by Codex', 'is written by participant A')
+        path.write_text(notice + text, encoding='utf-8')
     rows = []
     for case in manifests['mixed']['cases']:
         scores = {}
@@ -118,6 +146,9 @@ def run(folder, providers, timeout=180, deadline=600):
         manifests = load(folder)
         # Validate all arms before making calls, including those not reached yet.
         saved = arm_records(folder, manifests)
+        version = json.loads((folder / 'comparison.json').read_text(encoding='utf-8'))['version']
+        if version == 1 and any(not r or r['status'] != 'completed' for arm in saved.values() for r in arm.values()):
+            raise ValueError('Routing prompts changed. Keep the old reports and start a new comparison.')
         remaining = sum(3 + 2 * manifests[a]['rounds'] - (len(r['turns']) if r else 0)
                         for a in ARMS for r in saved[a].values())
         print(f'Total remaining calls across all arms: {remaining}', flush=True)
@@ -128,7 +159,7 @@ def run(folder, providers, timeout=180, deadline=600):
                 for role in ('codex', 'claude'):
                     actual = role if arm == 'mixed' else arm.removesuffix('-only')
                     if actual in providers:
-                        routed[role] = RoutedProvider(providers[actual], actual)
+                        routed[role] = RoutedProvider(providers[actual], actual, role, arm)
                 evaluate.run_batch(folder / arm, routed, timeout, deadline)
         finally:
             report(folder, manifests)

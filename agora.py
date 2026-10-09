@@ -224,6 +224,14 @@ def prompt_version():
     return hashlib.sha256((str(evidence.VERSION) + "\n" + "\n".join(prompts)).encode()).hexdigest()
 
 
+def speaker(turn):
+    metadata = turn.get('metadata', {})
+    if metadata.get('actual_provider'):
+        role = metadata.get('participant') or {'codex': 'participant_A', 'claude': 'participant_B'}[turn['provider']]
+        return f"{role} ({metadata['actual_provider']})"
+    return turn['provider']
+
+
 def save(run_dir, record):
     run_dir.mkdir(parents=True, exist_ok=True)
     # Rebuild from the saved answers, never from a model's verdict or a cached ledger.
@@ -245,7 +253,7 @@ def save(run_dir, record):
               'Only declared expressions are checked. Their inputs and units remain unverified.',
               'Earlier errors stay in this history even when a later turn corrects them.', '']
     for turn in record['calculation_checks']:
-        lines += [f"### Turn {turn['turn']}: {turn['provider']} ({turn['phase']})", '']
+        lines += [f"### Turn {turn['turn']}: {speaker(record['turns'][turn['turn'] - 1])} ({turn['phase']})", '']
         if not turn['checks']:
             lines += [f"No calculations checked ({turn['status']}).", '']
         lines.extend(turn['warnings'])
@@ -265,7 +273,7 @@ def save(run_dir, record):
     lines += ['', '## Source checks by turn', '',
               'Quote matches and model judgments are listed separately. Missing declarations leave prose unchecked.', '']
     for row in record['source_checks']:
-        lines += [f"### Turn {row['turn']}: {row['provider']}",
+        lines += [f"### Turn {row['turn']}: {speaker(record['turns'][row['turn'] - 1])}",
                   f"Declarations: {row['status']}; reviews: {row['review_status']}", '']
         for check in row['checks']:
             lines += [f"- {check['id']}: {check['status']} ({check['source_id']})",
@@ -275,7 +283,7 @@ def save(run_dir, record):
             lines += [f"- Review of {review['target']}: {review['relation']} ({review['status']})",
                       f"  {review['reason']}", '']
     for entry in record["turns"]:
-        lines += [f"## {entry['phase']} / {entry['provider']} / round {entry['round']}", entry["text"], ""]
+        lines += [f"## {entry['phase']} / {speaker(entry)} / round {entry['round']}", entry["text"], ""]
     (run_dir / "report.md").write_text("\n".join(lines), encoding="utf-8")
 
 
