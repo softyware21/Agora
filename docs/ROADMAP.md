@@ -16,6 +16,8 @@
 - Exact answer-field grading, visible regressions, and resumable evaluation batches.
 - Four challenge cases with independently checked numerical keys.
 - Mixed, Codex-only, and Claude-only comparison arms with equal call counts.
+- Neutral participant labels and explicit provider routing in comparison prompts.
+- Three fixed document packets testing scope, precedence, and incompatible metrics.
 
 ## Next: reproducibility
 

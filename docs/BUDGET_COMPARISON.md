@@ -59,6 +59,19 @@ mixed-model routing. The comparison runner rejects saved responses whose recorde
 routing does not match the arm. Transcripts retain legacy `provider` role labels;
 `metadata.actual_provider` identifies the provider used for each response.
 
+New comparisons use routing prompt version 2. Structured prompt history uses
+`participant_A` and `participant_B`, with explicit actual-provider assignments.
+Case report headings also show the participant and actual provider. Generated
+prose is preserved verbatim, so these instructions cannot guarantee correct
+attribution in every sentence.
+
+Version 1 comparisons remain readable and completed batches need no new calls.
+An unfinished version 1 comparison cannot resume with version 2 prompts; start a
+new batch to avoid mixing experimental conditions. Old responses are not rewritten.
+
+The [document suite](DOCUMENT_EVALUATION.md) adds three cases based on fixed,
+conflicting fictional excerpts. Use `--suite documents` to select it.
+
 Completed turns and arms are reused. A failure stops the experiment; the report
 keeps available answers and pending results visible. Only cases completed in all
 three arms enter paired totals. Missing or invalid answer blocks are non-passes,

@@ -149,6 +149,15 @@ This uses 15 calls total. Four additional challenge cases are available; `--all`
 runs them with 60 calls. Call counts are matched, but tokens and compute are not.
 See [the comparison design and limitations](docs/BUDGET_COMPARISON.md).
 
+Use `--suite documents` to evaluate decisions from conflicting fictional documents:
+
+```sh
+python budget_compare.py --suite documents --case dated-exception
+```
+
+The three cases cover effective dates and exceptions, unresolved instructions, and
+incompatible metrics. See [document evaluation](docs/DOCUMENT_EVALUATION.md).
+
 ## Subscription usage and security
 
 Agora consumes your subscription allowance. It does not provide unlimited usage
