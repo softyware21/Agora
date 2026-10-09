@@ -1,0 +1,34 @@
+[
+  {
+    "id": "reversed-aggregate",
+    "category": "aggregation",
+    "question": "In an observational comparison, method A succeeds in 81 of 90 easy cases and 2 of 10 hard cases. Method B succeeds in 9 of 10 easy cases and 18 of 90 hard cases. Report each method's overall success percentage (0-100). Are their success rates equal within each difficulty group? Does the overall difference alone establish that choosing A causes better outcomes?",
+    "fields": {"a_percent": "number", "b_percent": "number", "within_groups_equal": ["yes", "no"], "causal_effect_established": ["yes", "no"]},
+    "expected": {"a_percent": "83", "b_percent": "27", "within_groups_equal": "yes", "causal_effect_established": "no"},
+    "rationale": "A has 83/100 and B has 27/100. Both achieve 90% in easy cases and 20% in hard cases. Their case mix differs, and observational totals alone do not establish a causal effect."
+  },
+  {
+    "id": "dependent-alerts",
+    "category": "conditional_probability",
+    "question": "A synthetic detector has event prevalence 1/100, sensitivity 9/10, and false-positive probability 1/20. A second display copies the first detector's output exactly; it is not a second independent test. Both displays are positive. What is the exact probability that the event occurred? Would squaring the two conditional positive probabilities give a justified update? Express probability as a fraction between 0 and 1.",
+    "fields": {"posterior": "number", "independent_update_valid": ["yes", "no"]},
+    "expected": {"posterior": "2/13", "independent_update_valid": "no"},
+    "rationale": "The duplicate adds no evidence. The posterior is (1/100 * 9/10) / (1/100 * 9/10 + 99/100 * 1/20) = 2/13."
+  },
+  {
+    "id": "conditional-projects",
+    "category": "discrete_optimization",
+    "question": "Choose indivisible projects under a cost limit of 10. A costs 6 and returns 13; B costs 4 and returns 8; C costs 5 and returns 12; D costs 3 and returns 9; E costs 2 and returns 4. Returns and costs add. D may be selected only if B is also selected. A and C cannot both be selected. Which feasible set has the greatest return? Break equal-return ties by choosing the lower total cost. Give its project letters in alphabetical order, with no separators, total cost, and return. A suggested solution chooses C and D for return 21; is that set feasible?",
+    "fields": {"projects": ["AB", "AE", "BC", "BD", "BDE", "CE", "CD"], "cost": "number", "return": "number", "suggested_feasible": ["yes", "no"]},
+    "expected": {"projects": "BDE", "cost": "9", "return": "21", "suggested_feasible": "no"},
+    "rationale": "Enumerating all 32 subsets gives BDE as the unique optimum after the stated cost tie-break: cost 9, return 21. AB also returns 21 at cost 10, so use the lower-cost set to break equal-return ties. CD violates D's dependency on B."
+  },
+  {
+    "id": "inconsistent-policy",
+    "category": "conflicting_constraints",
+    "question": "Treat these fictional policy requirements as simultaneous mandatory constraints; none overrides another. Every record older than 30 days must be deleted. Every record on legal hold must be retained and not deleted. Record R is 45 days old and on legal hold. Is there a delete/retain action satisfying both constraints? If one exists, report delete or retain; otherwise report no_valid_action. Does adding a rule saying legal hold takes precedence change the original policy?",
+    "fields": {"action": ["delete", "retain", "no_valid_action"], "precedence_changes_policy": ["yes", "no"]},
+    "expected": {"action": "no_valid_action", "precedence_changes_policy": "yes"},
+    "rationale": "The original constraints require both deletion and nondeletion. A precedence rule changes the stipulated policy rather than resolving it from the supplied constraints."
+  }
+]

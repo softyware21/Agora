@@ -64,8 +64,11 @@ def validate_cases(cases):
     return cases
 
 
-def load_cases():
-    return validate_cases(json.loads(CASE_FILE.read_text(encoding='utf-8'), object_pairs_hook=unique_fields))
+def load_cases(suite='basic'):
+    if suite not in ('basic', 'challenge'):
+        raise ValueError('Unknown evaluation suite.')
+    path = CASE_FILE if suite == 'basic' else CASE_FILE.with_name('challenge.json')
+    return validate_cases(json.loads(path.read_text(encoding='utf-8'), object_pairs_hook=unique_fields))
 
 
 def rules(case):
