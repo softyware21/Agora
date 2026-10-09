@@ -92,6 +92,20 @@ Results are saved to `runs/<run-id>/report.md` and `transcript.json`. Failed run
 retain completed turns and are marked `stopped`. Histories are local, plaintext
 files excluded from Git.
 
+## Issue outcomes and continuation
+
+Completed discussions can continue in a new run directory:
+
+```sh
+python continue_debate.py --from runs/<run-id> --add-rounds 1 --plan
+python continue_debate.py --from runs/<run-id> --add-rounds 1 --note "Reconsider the unresolved issue with this additional information."
+```
+
+One extra round uses three calls. The original transcript is preserved. Reports
+show agreed, disputed, and insufficient-information issues with the latest cited
+positions and proposed next steps. These statuses are model judgments, not truth
+verification. See [continuation, new sources, and changed rules](docs/CONTINUING.md).
+
 ## Calculation checks
 
 Participants append an expression and expected result for each calculation. Agora

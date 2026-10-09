@@ -19,6 +19,8 @@
 - Neutral participant labels and explicit provider routing in comparison prompts.
 - Three fixed document packets testing scope, precedence, and incompatible metrics.
 - Summary quotation checks and explicit full-answer visibility across turns.
+- Issue-level model outcomes with both latest positions and citation checks.
+- Completed-discussion continuations with preserved history, supplements, and additional sources.
 
 ## Next: reproducibility
 
