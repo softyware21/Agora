@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="agora-token" content="__AGORA_TOKEN__">
+  <title>Agora — A place to think it through</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="wordmark" href="/">agora<span> / </span></a>
+    <p class="tagline">A place to think it through.</p>
+    <button id="new" class="primary full">+ New discussion</button>
+    <div class="section-label history-label">YOUR DISCUSSIONS <span id="history-count">0</span></div>
+    <nav id="history" aria-label="Saved discussions"></nav>
+    <footer><span class="dot"></span> Local workspace<p>Saved on this computer.<br>Answers use your subscriptions.</p></footer>
+  </aside>
+  <main>
+    <div id="connection" class="notice" hidden>Connection lost. Keep the local server running; this page will reconnect.</div>
+    <div id="error" class="error" role="alert" hidden></div>
+    <div id="active-job" class="notice" hidden><span id="job-label"></span><button id="view-active">View discussion</button></div>
+    <section id="editor">
+      <div class="eyebrow" id="editor-eyebrow">INDEPENDENT VIEWS. SHARED SCRUTINY.</div>
+      <h1 id="editor-title">What deserves<br>a second perspective?</h1>
+      <p class="intro" id="editor-intro">Give two models something to work through. See where they agree, where they differ, and what still needs evidence.</p>
+      <form id="setup">
+        <label for="question">Your question</label>
+        <textarea id="question" rows="4" maxlength="12000" required placeholder="Describe a decision, challenge an assumption, or examine a proposal…"></textarea>
+        <div id="note-wrap" hidden><label for="note">New information or focus</label><textarea id="note" rows="3" maxlength="8000" placeholder="What should the next round reconsider?"></textarea></div>
+        <div class="section-label">THE TABLE</div>
+        <div class="participants">
+          <div class="participant"><span class="avatar">G</span><div><h2>GPT <small>via Codex</small></h2><label for="codex-model">Participant model</label><input id="codex-model" maxlength="128" placeholder="CLI default" autocomplete="off"></div></div>
+          <div class="participant"><span class="avatar clay">C</span><div><h2>Claude <small>via Claude Code</small></h2><label for="claude-model">Participant model</label><input id="claude-model" maxlength="128" placeholder="CLI default" autocomplete="off"></div></div>
+        </div>
+        <div class="row three">
+          <div><label for="rounds" id="rounds-label">Review rounds</label><select id="rounds"><option value="1">1 round</option><option value="2">2 rounds</option><option value="3">3 rounds</option></select></div>
+          <div><label for="summary-provider">Summary by</label><select id="summary-provider"><option value="codex">GPT / Codex</option><option value="claude">Claude</option></select></div>
+          <div><label for="summary-model">Summary model</label><input id="summary-model" maxlength="128" placeholder="Same as participant" autocomplete="off"></div>
+        </div>
+        <p class="hint">Enter a model ID or alias supported by your signed-in account. Leave blank to use the defaults.</p>
+        <details class="settings"><summary>Rules, sources & timing</summary>
+          <label for="rules">Discussion rules</label><textarea id="rules" rows="3" maxlength="8000"></textarea>
+          <label for="sources">Source URLs <span class="optional">optional · one per line</span></label><textarea id="sources" rows="2" placeholder="https://example.org/document"></textarea>
+          <p class="hint">Up to five public HTTPS sources. For a follow-up, add only new sources.</p>
+          <div class="row"><div><label for="timeout">Seconds per answer</label><input id="timeout" type="number" min="10" max="600" value="180" required></div><div><label for="deadline">Total generation deadline</label><input id="deadline" type="number" min="1" max="7200" value="600" required></div></div>
+        </details>
+        <div class="form-actions"><button type="submit" id="preview" class="primary">Review setup <span>→</span></button><span class="hint">Previewing uses no model calls.</span></div>
+      </form>
+      <section id="plan" class="plan" hidden aria-live="polite">
+        <div><div class="section-label">BEFORE YOU START</div><h2 id="plan-count"></h2><p id="plan-models"></p><p class="hint">Remaining subscription allowance: unavailable. Call counts do not measure tokens or remaining allowance.</p></div>
+        <button id="start" class="primary">Start discussion →</button>
+      </section>
+    </section>
+    <section id="discussion" hidden>
+      <div class="eyebrow">DISCUSSION RECORD</div>
+      <div class="title-row"><h1 id="discussion-title"></h1><span id="status" class="badge"></span></div>
+      <div class="toolbar"><button id="resume" hidden>Resume discussion</button><button id="continue" class="primary" hidden>Continue discussion →</button><button id="stop" hidden>Stop after current answer</button><button id="back-setup" hidden>Back to setup</button><button id="download" hidden>Download report</button></div>
+      <div class="progress-card"><div class="title-row"><strong id="progress-label">Preparing discussion</strong><span id="progress-count"></span></div><progress id="progress" value="0" max="5"></progress><p id="run-models" class="hint"></p><p id="run-error" class="error" hidden></p></div>
+      <div class="section-label">WHERE THINGS STAND</div>
+      <p class="hint">These are model judgments. Agreement and matching quotes do not establish truth.</p>
+      <div id="outcome-counts" class="outcome-counts"></div>
+      <div id="issues"></div>
+      <details id="summary-section" class="answer" hidden><summary>Final summary</summary><pre id="summary-text"></pre></details>
+      <div class="section-label timeline-label">THE DISCUSSION</div><div id="turns"></div>
+    </section>
+    <div class="page-footer">Think together. Keep the evidence separate.</div>
+  </main>
+</body>
+</html>
