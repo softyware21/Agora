@@ -18,6 +18,7 @@
 - Mixed, Codex-only, and Claude-only comparison arms with equal call counts.
 - Neutral participant labels and explicit provider routing in comparison prompts.
 - Three fixed document packets testing scope, precedence, and incompatible metrics.
+- Summary quotation checks and explicit full-answer visibility across turns.
 
 ## Next: reproducibility
 
@@ -36,6 +37,7 @@
 - Expand evaluation beyond the small arithmetic, logic, false-premise, and missing-information set.
 - Add repeated runs, held-out cases, blinded human review, and counterbalanced arm order.
 - Measure token and time differences beyond the current equal-call controls.
+- Evaluate whether summary claims of agreement are supported in meaning, beyond quote matching.
 
 ## User experience
 

@@ -126,6 +126,10 @@ prompt version. See [source formats, limits, and privacy](docs/SOURCES.md).
 
 ## Compare answers
 
+Summaries also cite earlier turns. Agora checks declared quotations and whether
+the cited speaker could see the answer they supposedly responded to. It does not
+verify that the quotation actually expresses agreement. See [summary attribution checks](docs/ATTRIBUTIONS.md).
+
 Run a fixed evaluation case to compare each model's independent first answer with
 the final debate summary:
 

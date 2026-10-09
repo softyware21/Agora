@@ -69,6 +69,10 @@ Version 1 comparisons remain readable and completed batches need no new calls.
 An unfinished version 1 comparison cannot resume with version 2 prompts; start a
 new batch to avoid mixing experimental conditions. Old responses are not rewritten.
 
+This compatibility also requires the same base generation prompt. The later
+[summary attribution change](ATTRIBUTIONS.md) changes that prompt; older files can
+still be opened, but resume and report regeneration require a compatible version.
+
 The [document suite](DOCUMENT_EVALUATION.md) adds three cases based on fixed,
 conflicting fictional excerpts. Use `--suite documents` to select it.
 
