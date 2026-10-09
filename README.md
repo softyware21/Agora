@@ -124,6 +124,21 @@ Snapshots are saved locally with retrieval dates and text hashes. Resume reuses 
 without downloading again; start a new run to change sources or use the current
 prompt version. See [source formats, limits, and privacy](docs/SOURCES.md).
 
+## Compare answers
+
+Run a fixed evaluation case to compare each model's independent first answer with
+the final debate summary:
+
+```sh
+python evaluate.py --case discount-premise
+```
+
+Run without arguments to list the six cases, or use `--all` to run all six. At one
+review round, that uses five calls per case or 30 for the full set. The grader checks
+declared answer fields against fixed keys and reports both improvements and
+regressions. Explanations still need human review; this is not a general accuracy
+score or an equal-budget comparison. See [evaluation and resume instructions](docs/EVALUATION.md).
+
 ## Subscription usage and security
 
 Agora consumes your subscription allowance. It does not provide unlimited usage

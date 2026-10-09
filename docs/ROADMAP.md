@@ -12,6 +12,8 @@
 - Exact arithmetic checks for declared calculations, passed into peer review.
 - Public source snapshots shared by both participants and preserved on resume.
 - Quote matching and separate model assessments of source support.
+- Six fixed evaluation cases comparing independent initial answers with the summary.
+- Exact answer-field grading, visible regressions, and resumable evaluation batches.
 
 ## Next: reproducibility
 
@@ -27,8 +29,8 @@
 - Evaluate how accurately reviewers judge whether passages support linked claims.
 - Improve calculation coverage beyond model-declared expressions.
 - Keep agreement separate from evidence status.
-- Compare against individual models using fixed evaluation cases.
-- Include false premises and questions that cannot be resolved.
+- Expand evaluation beyond the small arithmetic, logic, false-premise, and missing-information set.
+- Add repeated runs, held-out cases, human review, and equal-budget single-model controls.
 
 ## User experience
 
