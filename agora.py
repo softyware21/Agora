@@ -20,6 +20,7 @@ import sources
 import source_evidence
 import attribution
 import issues
+import models
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_RULES = "Respond in the question's language. Separate facts, assumptions, and opinions. Look for calculation errors and counterexamples. Do not equate agreement with verification."
@@ -124,8 +125,9 @@ def invoke(args, cwd, timeout, prompt=None):
 
 
 class Provider:
-    def __init__(self, name, cwd):
+    def __init__(self, name, cwd, model=None):
         self.name, self.cwd = name, cwd
+        self.model = models.model_id(model)
         self.path = executable(name)
         self.last_metadata = {}
 
@@ -171,6 +173,8 @@ class Provider:
             args = [self.path, "--safe-mode", "--restricted", "-p", "--tools", "",
                     "--disallowedTools", "*", "--strict-mcp-config", "--no-session-persistence",
                     "--output-format", "json", "--max-turns", "1"]
+        if self.model is not None:
+            args[1:1] = ['--model', self.model]
         code, out, err = invoke(args, self.cwd, timeout, prompt)
         if self.name == 'codex':
             model = re.search(r'^model:\s*([A-Za-z0-9._-]+)\s*$', err, re.MULTILINE)
@@ -191,7 +195,7 @@ class Provider:
             if any(marker in diagnostic for marker in ('rate limit', 'usage limit', 'usage-limit', 'rate_limit', 'quota exceeded')):
                 raise AgoraError(f"{self.name}: usage limit reached. Resume after the limit resets.", "usage_limit")
             # Do not persist raw stderr: provider diagnostics may contain account information.
-            raise AgoraError(f"{self.name}: request failed (exit code {code}). Check login, limits, and connectivity. No automatic retry.")
+            raise AgoraError(f"{self.name}: request failed (exit code {code}). Check model availability, login, limits, and connectivity. No automatic retry.")
         if self.name == "codex":
             text = result_file.read_text(encoding="utf-8") if result_file.exists() else ""
         else:
