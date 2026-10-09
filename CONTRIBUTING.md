@@ -15,6 +15,8 @@ messages should say what changed and why. Avoid promotional copy and boilerplate
 ## Commit history
 
 - Keep each commit focused on one meaningful change.
+- Prefer small steps that make the development easy to follow. Keep the tests for
+  a behavior change with that change; do not split commits just to increase the count.
 - Use an imperative subject, optionally prefixed with `feat:`, `fix:`, `docs:`,
   `test:`, or `chore:`. Example: `fix: preserve completed turns after a timeout`.
 - Explain the reason and relevant validation when the subject is not enough.
