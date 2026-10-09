@@ -7,15 +7,15 @@
 - Subscription authentication checks without API fallback.
 - Reports, transcripts, and partial-run preservation.
 - Unit tests and a successful live five-call debate.
+- Resume from the first missing turn, with transcript checks and one-writer locking.
+- Per-attempt CLI versions, reported model names, and stop reasons.
 
 ## Next: reproducibility
 
 - Select an open-source license before accepting external contributions.
 - Test compatibility with supported CLI versions.
 - Separate provider adapters from orchestration.
-- Record model/CLI metadata without account identifiers.
 - Improve cancellation, deadlines, and cross-platform support.
-- Add resumable runs and explicit stop reasons.
 
 ## Evidence and evaluation
 

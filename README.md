@@ -63,6 +63,28 @@ Defaults: one review round, 180 seconds per generation, 600-second overall gener
 deadline. Set `--timeout` and `--deadline` to change them. Authentication checks and
 cleanup can add overhead. Press Ctrl+C to stop. No automatic retries or API fallback.
 
+To continue a stopped run:
+
+```sh
+python agora.py --resume runs/<run-id>
+```
+
+Completed turns are reused. If the second reviewer failed, it still receives the
+previous round's answers, not the first reviewer's new answer. The question, rules,
+and round count stay fixed; `--timeout` and `--deadline` apply to the new attempt.
+A completed run returns immediately without calling either model.
+
+Resume rejects damaged transcripts, changed settings, and a different prompt
+version before making a model call. Transcripts from the initial prototype do not
+have a schema version and cannot be resumed. Keep them for reference and start a
+new run. Only one process can write to a run at a time; its lock is released when
+the process exits.
+
+Each attempt records CLI versions, timing, and a stop reason. Per-turn model names
+are saved when the CLI reports them; an empty list means the model was not reported.
+CLI versions can change between attempts, so a resumed run is not guaranteed to
+use the same model build. No account identifiers are stored in this metadata.
+
 Results are saved to `runs/<run-id>/report.md` and `transcript.json`. Failed runs
 retain completed turns and are marked `stopped`. Histories are local, plaintext
 files excluded from Git.
@@ -86,7 +108,7 @@ is not affiliated with or endorsed by OpenAI or Anthropic.
 ## Limitations
 
 - No web interface, external source checking, or deterministic calculator.
-- No claim-level verification, resumable runs, or remaining-allowance dashboard.
+- No claim-level verification or remaining-allowance dashboard.
 - Codex writes the summary, which can introduce summarization bias.
 - CLI models and features may differ from the providers' web applications.
 
