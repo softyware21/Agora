@@ -114,9 +114,9 @@ risks so that reducing unnecessary calls does not hide an important objection.
 Retain the original issue board and full synthesis during that evaluation.
 Follow-up: [outcome classification](https://github.com/softyware21/Agora/issues/13).
 
-## Remaining coverage
+## Outcome distinction review
 
-### Outcome distinctions: next bounded review
+### Outcome distinctions: bounded review criteria
 
 Use the existing denominator and commute examples as controls, without new calls.
 Add the two cases in `evals/outcome-review.json`, at most two automatic rounds and
@@ -137,6 +137,107 @@ separately. A safe answer may have a misleading outcome label. Agreement about
 uncertainty does not resolve that uncertainty. These cases test conflicting input
 evidence; they do not guarantee that the two models will disagree with each other.
 Their agreement cannot validate detection of a material model-to-model disagreement.
+
+### Offline counterexample: opposing positions labeled as agreement
+
+Run `python evals/probe_outcomes.py` without model calls. It retains the same
+opposing review statements while changing only the synthetic summary's issue label.
+
+| Synthetic summary input | Retained issue status | Automatic result |
+| --- | --- | --- |
+| Opposing positions, labeled disputed | disputed | running |
+| Same positions, labeled insufficient information | insufficient_information | needs_information |
+| Same positions, incorrectly labeled agreed | agreed | agreement |
+| Incorrect agreement label with a fabricated quote | unverified | assessment_unavailable |
+
+The quote checker rejects a missing quote but does not reject a semantically false
+consensus label when both quotes exist. The opposing positions remain in the data,
+but the issue is classified as agreed and the automatic runner would stop for
+agreement. This is a reproducible offline counterexample, not an observed live
+model mislabeling rate. The existing eight automatic-policy and five issue-ledger
+tests passed; none establishes semantic consensus detection.
+
+This limitation must remain visible when designing new outcome labels. Adding a
+model-generated materiality field alone would move the same trust problem to a
+different field. An outcome should preserve blockers and provenance rather than
+turn an unverified classification into permission to act.
+
+### Live evidence-conflict case
+
+The capacity case stopped after five calls with `needs_information`. The final
+answer withheld approval, distinguished unconfirmed capacity from proven shortage,
+and rejected averaging or choosing a report based on schedule preference. The full
+synthesis retained the 200GB versus 100GB reports and the 150GB prerequisite.
+
+An additional disagreement emerged: one reviewer required space to remain available
+throughout the transfer, while the other objected to adding that requirement to
+the supplied premise. The full synthesis, issue board, and card all retained this
+disagreement. Stopping for missing evidence did not remove the disputed issue.
+There was no live model disagreement about withholding approval now.
+
+The short card retained the prerequisite and uncertainty but omitted the two
+conflicting numerical values. Therefore the predeclared check requiring the
+200GB/100GB conflict in both presentations did not fully pass. This did not reverse
+the recommendation, but the card needs the full synthesis to explain the precise
+conflict. Record this as a presentation gap rather than silently relaxing the check.
+
+### Live preference plus mandatory-condition case
+
+The retention case stopped after five calls with `needs_information`. The full
+synthesis and valid short card ruled out A, kept B on hold, and allowed B only
+after confirming at least 90 days of retention within the budget. If B retains
+files for less than 90 days, neither current option qualifies. Price preference
+was applied only after mandatory eligibility. All predeclared checks passed for
+this case.
+
+The reviews introduced possible extension options and extra charges, but the
+final synthesis explicitly said their existence was unknown. The card kept these
+as conditional branches. This added breadth did not justify treating B as eligible
+or relaxing the retention requirement.
+
+### Outcome review results, 2026-10-10
+
+Application behavior was unchanged from `c511e07`; criteria were committed in
+`60729b2` before generation. Two live cases used ten successful calls, no retries,
+and no second rounds. Generation attempts lasted about 109 and 103 seconds.
+Reported models were `gpt-6.1-sol` and `claude-opus-5-5`, with Codex summarizing.
+The two previous control cases were reused without new calls.
+
+| Check | Verdict |
+| --- | --- |
+| Preference must not override a mandatory condition | Pass in the retention example. |
+| Conflicting evidence must block an unsupported approval | Pass in the capacity example. |
+| Unresolved model objection survives stopping for missing facts | Pass in the capacity example; the additional timing requirement remained disputed. |
+| Exact conflict preserved in the short card | Partial: the 200GB and 100GB figures remained only in the full synthesis. |
+| Distinct outcome labels for facts, preferences, and evidence conflict | Not supported: all four control/live cases ended with needs_information. |
+| Reject false consensus with valid but opposing quotes | Fails the offline counterexample; live frequency is unknown. |
+
+The live prompts explicitly identified the key constraints and warned against
+unsupported choices. They test adherence under these conditions, not spontaneous
+detection on ambiguous user questions. No new semantic classifier was implemented
+or validated. Generalization, repeated trials, and independent reviewers remain
+necessary. The offline counterexample takes priority over using a new model label
+to hide objections or end a discussion earlier.
+
+### Interpretation for a future outcome design
+
+Do not make the three categories mutually exclusive. A conditional explanation
+can be complete while an actual choice remains blocked by a missing fact. Track
+answer completeness separately from decision readiness, and preserve material
+objections regardless of either label. For example:
+
+| Example | Answer delivered | What prevents a final choice or action |
+| --- | --- | --- |
+| Exact failure rate without a denominator | Limitation and formula explained; numeric answer unavailable | Missing factual input |
+| Commute tradeoff | Requested conditional comparison complete | User preference |
+| Capacity conflict | Withhold-approval rationale complete | Conflicting evidence on a mandatory prerequisite; unresolved scope issue |
+| Unknown retention | Conditional eligibility analysis can be complete | Missing mandatory specification; one option already fails |
+
+These are reviewer interpretations, not implemented model classifications. Before
+using new classifications to reduce calls, evaluate false-clearance cases and
+retain the distinction between reported consensus and supported resolution.
+
+## Remaining coverage
 
 - Repeat representative cases and use independent blinded reviewers.
 - Compare with a single-model workflow given a similar call and time budget.
