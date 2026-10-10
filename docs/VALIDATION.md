@@ -116,6 +116,28 @@ Follow-up: [outcome classification](https://github.com/softyware21/Agora/issues/
 
 ## Remaining coverage
 
+### Outcome distinctions: next bounded review
+
+Use the existing denominator and commute examples as controls, without new calls.
+Add the two cases in `evals/outcome-review.json`, at most two automatic rounds and
+600 seconds per case (sixteen calls total, no automatic retries). Do not send the
+acceptance checks to participants. Keep current prompts and stopping behavior.
+
+Review against these distinctions before implementing any new outcome classifier:
+
+| Situation | Required interpretation |
+| --- | --- |
+| Missing denominator | A fact blocks the requested numeric answer. Ask for that fact. |
+| Complete commute comparison | The requested conditional guidance is complete; personal preference remains with the user. |
+| Conflicting capacity reports | Equal-authority evidence conflicts on a mandatory prerequisite. Do not convert that conflict into an optional preference or average it away. |
+| Price preference with unknown retention | A known violation rules out one option; an unknown mandatory specification blocks unconditional selection of the other. |
+
+Inspect the full synthesis, concise card, issue board, and actual stop reason
+separately. A safe answer may have a misleading outcome label. Agreement about
+uncertainty does not resolve that uncertainty. These cases test conflicting input
+evidence; they do not guarantee that the two models will disagree with each other.
+Their agreement cannot validate detection of a material model-to-model disagreement.
+
 - Repeat representative cases and use independent blinded reviewers.
 - Compare with a single-model workflow given a similar call and time budget.
 - Test shared false premises, conflicting evidence, and instructions embedded in sources.
