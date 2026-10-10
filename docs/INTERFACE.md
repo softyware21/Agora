@@ -70,10 +70,29 @@ an API account or automatically retries a generation.
 
 ## Results and follow-up rounds
 
-The result shows agreed, disputed, insufficient-information, and unverified issue
-counts. Expand cited positions, the final summary, or individual answers. Quote
-checks and model judgments remain separate; neither establishes factual truth.
-Download the Markdown report from the discussion view.
+**Where we stand** starts with the substance of reported common ground and open
+issues. Counts are secondary. Select an issue to compare the two positions cited
+by the summarizer, see whether each quote was found, and open its saved answer.
+An unverified issue remains open even if the model called it agreed. Missing
+issue outcomes are explicitly unavailable, never interpreted as consensus.
+The full synthesis remains available below the issue inspector.
+
+**How we got here** groups independent answers and each review round, with both
+participants shown together when space permits. Excerpts come from saved text;
+full answers and requested/reported model IDs stay available. An incomplete pair
+shows which answer has not been saved. The view does not infer changes of mind
+or match an issue to earlier turns without an explicit citation. Same-round
+answers do not see each other, which is stated beside each review round.
+
+Active discussions open on the reasoning view. Progress describes the current
+participant's activity and marks the independent-view, cross-review, and synthesis
+stages. Completed records open on their outcomes. Switching views never starts
+model calls. Short history labels are clipped question text, not generated titles;
+the complete question remains available in the discussion view. History also
+shows whether reported issues remain open.
+
+Quote checks and model judgments remain separate; neither establishes factual
+truth. Download the complete Markdown report from the discussion view.
 
 **Revisit this issue** and **Add evidence** open a follow-up form with that
 issue's topic, reason, and next step in the editable note. The latter also opens
