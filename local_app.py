@@ -87,7 +87,8 @@ class App:
             try:
                 record = self.record(folder.name)
                 result.append({'id': folder.name, 'question': record['question'], 'status': record['status'],
-                               'started_at': record.get('started_at'), 'turns': len(record['turns'])})
+                               'started_at': record.get('started_at'), 'turns': len(record['turns']),
+                               'outcomes': [item['status'] for item in record.get('issue_outcomes', {}).get('issues', [])]})
             except (ValueError, OSError, run_state.StateError):
                 result.append({'id': folder.name, 'question': 'Unreadable discussion', 'status': 'unavailable', 'turns': 0})
         return sorted(result, key=lambda item: item.get('started_at') or '', reverse=True)

@@ -59,6 +59,7 @@ class AppTests(unittest.TestCase):
         self.assertTrue(detail['can_continue'])
         self.assertFalse(detail['can_resume'])
         self.assertEqual(self.app.history()[0]['id'], run_id)
+        self.assertEqual(self.app.history()[0]['outcomes'], [item['status'] for item in detail['record']['issue_outcomes']['issues']])
         self.assertTrue((self.root / run_id / 'report.md').is_file())
 
     def test_stop_saves_current_answer_and_resume_only_calls_missing_turns(self):
