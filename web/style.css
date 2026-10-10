@@ -853,3 +853,19 @@ html[lang="ko"] h1,html[lang="ko"] .verdict h2,html[lang="ko"] .judgment-section
 .judgment-section > summary { cursor:pointer; font-size:14px; }
 .judgment-section[open] > summary { margin-bottom:24px; }
 @media(max-width:600px) { .conclusion { padding:20px 16px; } #ask { width:100%; } }
+
+#discussion #discussion-title { font-family:Segoe UI,"Malgun Gothic",sans-serif; font-size:22px; line-height:1.4; letter-spacing:0; margin-bottom:8px; }
+#discussion .toolbar { margin:12px 0; }
+#discussion .view-switch { margin:14px 0; }
+#discussion .question-detail { margin:4px 0 10px; }
+#discussion .conclusion { margin:14px 0; padding:20px 24px; }
+#discussion .conclusion > .hint { margin:6px 0 14px; }
+#automatic-reason { margin:10px 0; padding:10px 14px; }
+.result-lead { font-size:19px; font-weight:600; line-height:1.6; margin:12px 0 18px; }
+.result-section h3 { font-size:14px; margin:16px 0 6px; }
+.result-section ul { margin:6px 0; padding-left:22px; }
+.result-section li { margin:5px 0; }
+.full-synthesis,.discussion-data { margin-top:22px; }
+.full-synthesis > summary,.discussion-data > summary { cursor:pointer; font-size:12px; color:var(--muted); }
+.finished .progress-card { margin-top:28px; }
+@media(max-width:600px) { #discussion #discussion-title { font-size:19px; } #discussion .conclusion { padding:18px 16px; } }

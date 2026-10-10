@@ -1,4 +1,12 @@
 const korean = {
+  "Discussion data": "토론 데이터",
+  "This discussion data could not be read. Its original content is shown below.": "토론 데이터를 읽을 수 없어 아래에 원문을 표시합니다.",
+  "Conditions and uncertainty": "적용 조건과 불확실성",
+  "Key reasons": "핵심 근거",
+  "Next steps": "다음 행동",
+  "Full synthesis and evidence": "전체 요약과 근거 보기",
+  "The concise result could not be read. The full synthesis is shown instead.": "간결한 결과를 읽을 수 없어 전체 요약을 표시합니다.",
+
   "Resume within the saved round limit. Completed answers stay in place; the time budget starts again.": "저장된 라운드 한도 안에서 검토를 이어갑니다. 완료된 답변은 유지되며 제한 시간은 새로 시작합니다.",
   "What still needs an answer": "아직 답이 필요한 부분",
   "Earlier review": "이전 검토 기록",
@@ -369,7 +377,7 @@ async function launch(requested) {
 }
 
 function payload() {
-  return {mode, parent, question: $('question').value, rules: mode === 'new' ? AgoraDiscussion.purposeRules($('rules').value, $('purpose').value) + '\nAdapt your review to the question. In the summary, lead with a concise usable conclusion, then the key reasons, then remaining uncertainty and conditions that would change the answer. Use the language of the question. If essential information is missing, state the specific question the user needs to answer. Do not invent preferences or force consensus.' : $('rules').value, rounds: Number($('rounds').value),
+  return {mode, parent, question: $('question').value, rules: mode === 'new' ? AgoraDiscussion.purposeRules($('rules').value, $('purpose').value) + '\nAdapt your review to the question. In the summary, lead with a concise usable conclusion, then the key reasons, then remaining uncertainty and conditions that would change the answer. Use the language of the question. If essential information is missing, state the specific question the user needs to answer. Do not invent preferences or force consensus.' + AgoraDiscussion.resultInstruction : $('rules').value, rounds: Number($('rounds').value),
     source_urls: $('sources').value.split('\n').map(s => s.trim()).filter(Boolean), note: $('note').value,
     automatic: $('review-mode').value === 'automatic', model_selection: selection(), timeout: Number($('timeout').value), deadline: Number($('deadline').value)};
 }
@@ -431,10 +439,13 @@ async function openRun(id) {
 function renderDetail(data) {
   const open = new Set([...$('discussion').querySelectorAll('details[open]')].map(el => el.id));
   const record = data.record, job = state.job, active = job.active && job.run_id === data.id;
-  $('discussion-title').textContent = AgoraDiscussion.shortTitle(record.question, 130);
-  $('full-question').hidden = record.question.length <= 130; $('question-text').textContent = record.question;
+  $('discussion-title').textContent = AgoraDiscussion.shortTitle(record.question, 56);
+  $('full-question').hidden = record.question.length <= 56; $('question-text').textContent = record.question;
   $('status').textContent = active ? (job.stopping ? t('Stopping') : t('In progress')) : record.status === 'running' ? t('Unfinished') : t(record.status);
-  $('progress').closest('.progress-card').classList.toggle('complete', !active && record.status === 'completed');
+  const finished = !active && record.status === 'completed', progressCard = $('progress').closest('.progress-card');
+  progressCard.classList.toggle('complete', finished);
+  $('discussion').insertBefore(progressCard, finished ? $('judgment-section') : document.querySelector('.view-switch'));
+  $('discussion').classList.toggle('finished', finished);
   const total = 3 + 2 * record.rounds, count = record.turns.length;
   $('debate-stages').replaceChildren();
   const stages = AgoraDiscussion.stages(record), current = stages.findIndex(done => !done);
@@ -468,8 +479,28 @@ function renderDetail(data) {
   $('automatic-reason').hidden = active || !messages[reason];
   $('automatic-reason').textContent = t(messages[reason] || '');
   renderJudgment(data);
-  $('summary-section').hidden = !record.summary; $('summary-text').replaceChildren(renderAnswer(record.summary || '', t));
+  $('summary-section').hidden = !record.summary; renderConclusion(record.summary || '');
   renderJourney(record, open);
+}
+function renderConclusion(summary) {
+  const card = AgoraDiscussion.resultCard(summary);
+  $('summary-text').replaceChildren();
+  if (!card) {
+    if (/agora-result/.test(summary)) $('summary-text').append(node('p', t('The concise result could not be read. The full synthesis is shown instead.'), 'notice'));
+    $('summary-text').append(renderAnswer(summary, t));
+    return;
+  }
+  $('summary-text').append(node('p', card.conclusion, 'result-lead'));
+  for (const [key, label] of [['conditions', 'Conditions and uncertainty'], ['reasons', 'Key reasons'], ['next_steps', 'Next steps']]) {
+    if (!card[key].length) continue;
+    const section = node('section', undefined, 'result-section'), list = node('ul');
+    section.append(node('h3', t(label)));
+    for (const item of card[key]) list.append(node('li', item));
+    section.append(list); $('summary-text').append(section);
+  }
+  const source = node('details', undefined, 'full-synthesis');
+  source.append(node('summary', t('Full synthesis and evidence')), renderAnswer(summary, t));
+  $('summary-text').append(source);
 }
 function setDiscussionView(view) {
   discussionView = view;
