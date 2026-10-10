@@ -1,4 +1,33 @@
 const korean = {
+  "Resume within the saved round limit. Completed answers stay in place; the time budget starts again.": "저장된 라운드 한도 안에서 검토를 이어갑니다. 완료된 답변은 유지되며 제한 시간은 새로 시작합니다.",
+  "What still needs an answer": "아직 답이 필요한 부분",
+  "Earlier review": "이전 검토 기록",
+  "Think it through →": "함께 검토하기 →",
+  "Customize this discussion": "세부 설정",
+  "Review approach": "검토 방식",
+  "Automatic · within a limit": "자동 검토 · 한도 내에서 진행",
+  "Fixed rounds": "정해진 라운드 진행",
+  "Preview settings": "설정 미리 보기",
+  "Your conclusion": "검토 결과",
+  "Explore the issues and evidence": "쟁점과 근거 자세히 보기",
+  "Keep a personal note": "내 생각 기록하기",
+  "A recommendation from the models. Review the conditions and uncertainty before acting.": "두 모델이 정리한 제안입니다. 적용 조건과 불확실성도 함께 확인하세요.",
+  "Automatic: up to {rounds} rounds · at most {calls} calls · {minutes} min. Uses your subscriptions.": "자동 검토: 최대 {rounds}라운드 · 최대 {calls}회 호출 · {minutes}분. 구독 사용량이 소모됩니다.",
+  "Fixed review: {rounds} rounds · {calls} calls · {minutes} min. Uses your subscriptions.": "고정 검토: {rounds}라운드 · {calls}회 호출 · {minutes}분. 구독 사용량이 소모됩니다.",
+  "Maximum review rounds": "최대 검토 라운드",
+  "The reported issues have reached agreement. This is not factual verification.": "보고된 쟁점에 모델 의견이 모여 검토를 마쳤습니다. 사실 검증을 뜻하지는 않습니다.",
+  "Further review needs information. See the remaining questions below.": "추가 정보가 필요해 검토를 마쳤습니다. 아래 결과에서 남은 질문을 확인하세요.",
+  "The issue assessment could not be confirmed. Automatic review stopped.": "쟁점 평가를 확인할 수 없어 자동 검토를 멈췄습니다.",
+  "The reported positions repeated without a wording change. Review stopped.": "보고된 입장이 같은 표현으로 반복되어 검토를 마쳤습니다.",
+  "The review limit was reached. Remaining disagreements are included below.": "검토 한도에 도달했습니다. 남은 이견도 결과에 포함됩니다.",
+  "The time limit was reached. Saved answers remain available.": "시간 한도에 도달했습니다. 저장된 답변은 그대로 남아 있습니다.",
+  "Automatic review was stopped at your request.": "요청에 따라 자동 검토를 멈췄습니다.",
+  "Up to {count} calls · GPT {gpt} / Claude {claude}": "최대 {count}회 호출 · GPT {gpt} / Claude {claude}",
+  "What would you like to figure out?": "무엇을 해결하고 싶나요?",
+  "Ask a question. GPT and Claude will examine it together and bring back a conclusion, with reasons and remaining uncertainty.": "질문을 남기세요. GPT와 Claude가 함께 검토하고, 근거와 남은 불확실성을 담아 결론을 가져옵니다.",
+  "Resume saved review →": "저장된 검토 이어가기 →",
+  "Reconsider with this context →": "이 조건으로 다시 검토하기 →",
+
   "Models agree": "모델 의견 일치",
   "A shared judgment": "두 모델이 내린 판단",
   "Quote found": "인용 확인",
@@ -263,7 +292,7 @@ const $ = id => document.getElementById(id);
 const token = document.querySelector('meta[name="agora-token"]').content;
 let mode = 'new', parent = null, selected = null, detail = null, planPayload = null;
 let state = {job: {}, runs: []}, initialized = false, polling = false, historySignature = '', detailSignature = '';
-let focusedIssue = null, discussionView = 'results';
+let focusedIssue = null, discussionView = 'results', starting = false, followedRun = null, followedOrigin = null;
 const judgmentDrafts = new Map();
 const purposeDescriptions = {general: 'Explore the question from two perspectives.', decision: 'Make criteria, tradeoffs, and conditions for a decision explicit.', verify: 'Separate supporting evidence, counterevidence, and missing information.', compare: 'Compare alternatives against the same criteria.'};
 function renderPurpose() { $('purpose-hint').textContent = t(purposeDescriptions[$('purpose').value]); }
@@ -285,7 +314,7 @@ function node(tag, text, className) {
 }
 function error(message) { $('error').textContent = t(message); $('error').hidden = !message; }
 async function act(work) { error(''); try { await work(); } catch (e) { error(e.message); } }
-function invalidate() { planPayload = null; $('plan').hidden = true; }
+function invalidate() { planPayload = null; $('plan').hidden = true; renderBudget(); }
 const modelChoices = {
   codex: [['gpt-6.1-sol', 'GPT-6.1 Sol · general use'], ['gpt-6-astra', 'GPT-6 Astra · demanding analysis'], ['gpt-6-luna', 'GPT-6 Luna · lighter tasks']],
   claude: [['sonnet', 'Claude Sonnet · balanced'], ['opus', 'Claude Opus · deeper analysis'], ['haiku', 'Claude Haiku · faster responses']]
@@ -310,21 +339,52 @@ function selection() {
   return {codex: modelValue('codex'), claude: modelValue('claude'),
     summary_provider: $('summary-provider').value, summary_model: modelValue('summary')};
 }
+
+function renderBudget() {
+  const rounds = Number($('rounds').value), auto = $('review-mode').value === 'automatic';
+  const calls = (mode === 'new' ? 2 : 0) + (auto ? 3 * rounds : 2 * rounds + 1);
+  $('simple-budget').textContent = mode === 'resume' ? t('Resume within the saved round limit. Completed answers stay in place; the time budget starts again.') : t(auto ? 'Automatic: up to {rounds} rounds · at most {calls} calls · {minutes} min. Uses your subscriptions.' : 'Fixed review: {rounds} rounds · {calls} calls · {minutes} min. Uses your subscriptions.', {rounds, calls, minutes: Math.round(Number($('deadline').value) / 6) / 10});
+  $('rounds-label').textContent = t(auto ? 'Maximum review rounds' : mode === 'continue' ? 'Additional review rounds' : 'Review rounds');
+  $('ask').textContent = t(mode === 'resume' ? 'Resume saved review →' : mode === 'continue' ? 'Reconsider with this context →' : 'Think it through →');
+}
+function restorePreferences() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('agora.preferences') || 'null');
+    if (!saved || !saved.models) return;
+    const m = saved.models;
+    if (!['codex', 'claude'].includes(m.summary_provider) || ![m.codex, m.claude, m.summary_model].every(v => v === null || (typeof v === 'string' && /^[A-Za-z0-9._-]{1,128}$/.test(v)))) return;
+    $('summary-provider').value = m.summary_provider;
+    fillModels('codex', 'codex', m.codex); fillModels('claude', 'claude', m.claude); fillModels('summary', m.summary_provider, m.summary_model);
+  } catch (_) { /* Use defaults when local preferences are unavailable. */ }
+}
+async function launch(requested) {
+  if (starting || state.job.active) return;
+  starting = true; $('ask').disabled = $('start').disabled = true;
+  try {
+    const result = await api('/api/start', requested);
+    try { localStorage.setItem('agora.preferences', JSON.stringify({models: requested.model_selection})); } catch (_) { /* Saving preferences is optional. */ }
+    followedRun = followedOrigin = result.run_id; invalidate();
+    await openRun(result.run_id); await poll();
+  } finally { starting = false; $('ask').disabled = $('start').disabled = !!state.job.active; }
+}
+
 function payload() {
-  return {mode, parent, question: $('question').value, rules: mode === 'new' ? AgoraDiscussion.purposeRules($('rules').value, $('purpose').value) : $('rules').value, rounds: Number($('rounds').value),
+  return {mode, parent, question: $('question').value, rules: mode === 'new' ? AgoraDiscussion.purposeRules($('rules').value, $('purpose').value) + '\nAdapt your review to the question. In the summary, lead with a concise usable conclusion, then the key reasons, then remaining uncertainty and conditions that would change the answer. Use the language of the question. If essential information is missing, state the specific question the user needs to answer. Do not invent preferences or force consensus.' : $('rules').value, rounds: Number($('rounds').value),
     source_urls: $('sources').value.split('\n').map(s => s.trim()).filter(Boolean), note: $('note').value,
-    model_selection: selection(), timeout: Number($('timeout').value), deadline: Number($('deadline').value)};
+    automatic: $('review-mode').value === 'automatic', model_selection: selection(), timeout: Number($('timeout').value), deadline: Number($('deadline').value)};
 }
 function edit(nextMode = 'new', record = null, id = null) {
   $('purpose').value = 'general'; $('purpose-wrap').hidden = nextMode !== 'new'; renderPurpose();
   mode = nextMode; parent = id; selected = null; detailSignature = ''; invalidate(); error('');
   $('editor').hidden = false; $('discussion').hidden = true;
-  $('editor-title').textContent = mode === 'new' ? t('What deserves a second perspective?') : mode === 'resume' ? t('Pick up where you left off.') : t('What should we reconsider?');
-  $('editor-intro').textContent = mode === 'new' ? t('Give two models something to work through. See where they agree, where they differ, and what still needs evidence.') : mode === 'resume' ? t('Completed answers and model settings stay in place. Only unfinished calls will run.') : t('Add new information or change the conditions. Earlier answers stay in the original record.');
+  $('editor-title').textContent = mode === 'new' ? t('What would you like to figure out?') : mode === 'resume' ? t('Pick up where you left off.') : t('What should we reconsider?');
+  $('editor-intro').textContent = mode === 'new' ? t('Ask a question. GPT and Claude will examine it together and bring back a conclusion, with reasons and remaining uncertainty.') : mode === 'resume' ? t('Resume within the saved round limit. Completed answers stay in place; the time budget starts again.') : t('Add new information or change the conditions. Earlier answers stay in the original record.');
   $('question').value = record?.question || ''; $('question').readOnly = mode !== 'new';
   $('rules').value = record?.rules ?? state.default_rules ?? '';
   $('note').value = ''; $('note-wrap').hidden = mode !== 'continue'; $('sources').value = '';
-  $('rounds').value = mode === 'resume' ? String(record.rounds) : '1';
+  for (const option of $('rounds').options) option.disabled = mode === 'continue' && Number(option.value) > 12 - record.rounds;
+  $('rounds').value = mode === 'resume' ? String(Math.min(record.rounds, 3)) : String(mode === 'continue' ? Math.min(3, 12 - record.rounds) : 3);
+  $('review-mode').value = 'automatic';
   $('rounds-label').textContent = mode === 'continue' ? t('Additional review rounds') : t('Review rounds');
   const models = record?.model_selection || {};
   $('summary-provider').value = models.summary_provider || 'codex';
@@ -334,6 +394,8 @@ function edit(nextMode = 'new', record = null, id = null) {
   $('timeout').value = '180'; $('deadline').value = '600';
   for (const control of $('setup').querySelectorAll('input,textarea,select')) control.disabled = mode === 'resume' && !['timeout','deadline'].includes(control.id);
   $('start').textContent = mode === 'new' ? t('Start discussion →') : mode === 'resume' ? t('Resume discussion →') : t('Start follow-up →');
+  if (mode === 'new') restorePreferences();
+  $('advanced-settings').open = false; renderBudget();
   historySignature = ''; renderHistory(); window.scrollTo({top: 0});
 }
 function renderHistory() {
@@ -356,10 +418,10 @@ function renderHistory() {
   }
 }
 async function openRun(id) {
-  selected = id; focusedIssue = null; setDiscussionView(state.job.active && state.job.run_id === id ? 'journey' : 'results'); detail = null; detailSignature = ''; $('editor').hidden = true; $('discussion').hidden = false;
+  selected = id; focusedIssue = null; setDiscussionView('results'); detail = null; detailSignature = ''; $('editor').hidden = true; $('discussion').hidden = false;
   $('discussion-title').textContent = t('Loading discussion…'); $('issues').replaceChildren(); $('turns').replaceChildren();
   $('resume').hidden = $('continue').hidden = $('download').hidden = $('back-setup').hidden = $('stop').hidden = true;
-  $('judgment-section').hidden = true;
+  $('judgment-section').hidden = true; $('judgment-section').open = false; $('issue-details').open = false; $('automatic-reason').hidden = true; $('remaining-questions').hidden = true;
   $('summary-section').hidden = $('run-error').hidden = $('issue-inspector').hidden = $('full-question').hidden = true;
   $('issue-overview').replaceChildren(); $('debate-stages').replaceChildren(); $('outcome-title').textContent = ''; $('outcome-intro').textContent = ''; $('outcome-counts').replaceChildren();
   $('progress').closest('.progress-card').classList.remove('complete');
@@ -372,7 +434,7 @@ function renderDetail(data) {
   $('discussion-title').textContent = AgoraDiscussion.shortTitle(record.question, 130);
   $('full-question').hidden = record.question.length <= 130; $('question-text').textContent = record.question;
   $('status').textContent = active ? (job.stopping ? t('Stopping') : t('In progress')) : record.status === 'running' ? t('Unfinished') : t(record.status);
-  $('progress').closest('.progress-card').classList.toggle('complete', record.status === 'completed');
+  $('progress').closest('.progress-card').classList.toggle('complete', !active && record.status === 'completed');
   const total = 3 + 2 * record.rounds, count = record.turns.length;
   $('debate-stages').replaceChildren();
   const stages = AgoraDiscussion.stages(record), current = stages.findIndex(done => !done);
@@ -387,12 +449,24 @@ function renderDetail(data) {
   $('progress-label').textContent = active ? (job.stopping ? t('Stopping after the current answer…') : phaseLabel(job.phase)) : record.status === 'completed' ? t('Discussion complete') : t('Ready to resume');
   const model = record.model_selection || {};
   $('run-models').textContent = describeModels(model);
+  $('previous-review').hidden = !data.previous_run;
+  $('previous-review').onclick = () => act(() => openRun(data.previous_run));
   const failure = (job.run_id === data.id && job.error) || record.error;
   $('run-error').textContent = failure ? t(failure) : ''; $('run-error').hidden = !failure;
   $('resume').hidden = active || !data.can_resume; $('continue').hidden = active || !data.can_continue;
   $('resume').disabled = $('continue').disabled = !!job.active;
   $('stop').hidden = !active; $('stop').disabled = !!job.stopping; $('download').hidden = false;
   renderOutcomes(data);
+  const remaining = (record.issue_outcomes?.issues || []).filter(issue => issue.status !== 'agreed');
+  $('remaining-questions').hidden = !remaining.length || record.status !== 'completed';
+  $('remaining-list').replaceChildren();
+  for (const issue of remaining) {
+    const item = node('li'); item.append(node('strong', issue.topic || t('Unassessed issue')), node('p', issue.next_step || issue.reason || t('Unavailable'))); $('remaining-list').append(item);
+  }
+  const reason = data.automatic?.reason;
+  const messages = {agreement: 'The reported issues have reached agreement. This is not factual verification.', needs_information: 'Further review needs information. See the remaining questions below.', assessment_unavailable: 'The issue assessment could not be confirmed. Automatic review stopped.', repeated_positions: 'The reported positions repeated without a wording change. Review stopped.', round_limit: 'The review limit was reached. Remaining disagreements are included below.', deadline: 'The time limit was reached. Saved answers remain available.', user_stop: 'Automatic review was stopped at your request.'};
+  $('automatic-reason').hidden = active || !messages[reason];
+  $('automatic-reason').textContent = t(messages[reason] || '');
   renderJudgment(data);
   $('summary-section').hidden = !record.summary; $('summary-text').replaceChildren(renderAnswer(record.summary || '', t));
   renderJourney(record, open);
@@ -488,7 +562,7 @@ function renderIssue(data, issue) {
     $('issues').append(actions);
   } else if (record.status === 'completed' && record.rounds >= 12) $('issues').append(node('p', t('This record has reached the follow-up limit. You can still save your judgment.'), 'hint'));
   const decide = node('button', t('Record my judgment'), 'text-button');
-  decide.onclick = () => { $('judgment-section').scrollIntoView({behavior: 'smooth'}); $('my-decision').focus({preventScroll: true}); };
+  decide.onclick = () => { $('judgment-section').open = true; $('judgment-section').scrollIntoView({behavior: 'smooth'}); $('my-decision').focus({preventScroll: true}); };
   $('issues').append(decide);
 }
 function turnLink(record, turnId) {
@@ -607,7 +681,9 @@ async function poll() {
     const job = state.job;
     $('active-job').hidden = !job.active || selected === job.run_id;
     $('job-label').textContent = job.stopping ? t('Stopping after the current answer…') : t('Discussion in progress · {phase}', {phase: phaseLabel(job.phase)});
-    $('start').disabled = !!job.active;
+    $('start').disabled = !!job.active || starting;
+    $('ask').disabled = !!job.active || starting || !initialized;
+    if (followedRun && job.origin === followedOrigin && selected === followedRun && job.run_id && job.run_id !== followedRun) { followedRun = job.run_id; await openRun(followedRun); }
     if (selected) await refreshDetail(selected);
   } catch (e) { $('connection').hidden = false; }
   finally { polling = false; }
@@ -659,20 +735,15 @@ for (const kind of ['codex', 'claude', 'summary']) {
     invalidate();
   });
 }
-$('setup').onsubmit = event => { event.preventDefault(); act(async () => {
+$('setup').onsubmit = event => { event.preventDefault(); if (event.submitter?.id !== 'preview') { act(() => launch(payload())); return; } act(async () => {
   const requested = payload(), planned = await api('/api/plan', requested);
   if (JSON.stringify(requested) !== JSON.stringify(payload())) return;
-  planPayload = requested; $('plan-count').textContent = t('{count} calls · GPT {gpt} / Claude {claude}', {count: planned.calls, gpt: planned.by_provider.codex, claude: planned.by_provider.claude});
+  planPayload = requested; $('plan-count').textContent = t(planned.automatic ? 'Up to {count} calls · GPT {gpt} / Claude {claude}' : '{count} calls · GPT {gpt} / Claude {claude}', {count: planned.calls, gpt: planned.by_provider.codex, claude: planned.by_provider.claude});
   $('plan-purpose').textContent = mode === 'new' ? t(purposeDescriptions[$('purpose').value]) : '';
   $('plan-models').textContent = describeModels(planned.model_selection); $('plan').hidden = false; $('start').disabled = !!state.job.active;
   $('plan').scrollIntoView({behavior: 'smooth', block: 'nearest'});
 }); };
-$('start').onclick = () => act(async () => {
-  if (!planPayload) return;
-  $('start').disabled = true;
-  const result = await api('/api/start', planPayload); invalidate();
-  await poll(); await openRun(result.run_id);
-});
+$('start').onclick = () => act(async () => { if (planPayload) await launch(planPayload); });
 $('resume').onclick = () => edit('resume', detail.record, detail.id);
 $('continue').onclick = () => edit('continue', detail.record, detail.id);
 $('stop').onclick = () => act(async () => { await api('/api/stop', {}); await poll(); });
@@ -702,8 +773,8 @@ function setLanguage(value) {
     if (text.isConnected) text.textContent = original.replace(original.trim(), t(original.trim()));
   }
   for (const [element, name, original] of staticAttributes) element.setAttribute(name, t(original));
-  $('editor-title').textContent = t(mode === 'new' ? 'What deserves a second perspective?' : mode === 'resume' ? 'Pick up where you left off.' : 'What should we reconsider?');
-  $('editor-intro').textContent = t(mode === 'new' ? 'Give two models something to work through. See where they agree, where they differ, and what still needs evidence.' : mode === 'resume' ? 'Completed answers and model settings stay in place. Only unfinished calls will run.' : 'Add new information or change the conditions. Earlier answers stay in the original record.');
+  $('editor-title').textContent = t(mode === 'new' ? 'What would you like to figure out?' : mode === 'resume' ? 'Pick up where you left off.' : 'What should we reconsider?');
+  $('editor-intro').textContent = t(mode === 'new' ? 'Ask a question. GPT and Claude will examine it together and bring back a conclusion, with reasons and remaining uncertainty.' : mode === 'resume' ? 'Resume within the saved round limit. Completed answers stay in place; the time budget starts again.' : 'Add new information or change the conditions. Earlier answers stay in the original record.');
   $('rounds-label').textContent = t(mode === 'continue' ? 'Additional review rounds' : 'Review rounds');
   $('start').textContent = t(mode === 'new' ? 'Start discussion →' : mode === 'resume' ? 'Resume discussion →' : 'Start follow-up →');
   fillModels('codex', 'codex', savedModels.codex); fillModels('claude', 'claude', savedModels.claude);
@@ -712,20 +783,21 @@ function setLanguage(value) {
     $(`${kind}-custom`).value = draft;
     $(`${kind}-model`).value = '__custom'; $(`${kind}-custom-wrap`).hidden = false; $(`${kind}-custom`).required = true;
   }
+  renderBudget();
   historySignature = ''; detailSignature = ''; renderHistory();
   if (detail && selected === detail.id) renderDetail(detail);
   if (planPayload) {
     const requested = planPayload;
     api('/api/plan', requested).then(planned => {
       if (planPayload !== requested) return;
-      $('plan-count').textContent = t('{count} calls · GPT {gpt} / Claude {claude}', {count: planned.calls, gpt: planned.by_provider.codex, claude: planned.by_provider.claude});
+      $('plan-count').textContent = t(planned.automatic ? 'Up to {count} calls · GPT {gpt} / Claude {claude}' : '{count} calls · GPT {gpt} / Claude {claude}', {count: planned.calls, gpt: planned.by_provider.codex, claude: planned.by_provider.claude});
       $('plan-purpose').textContent = mode === 'new' ? t(purposeDescriptions[$('purpose').value]) : '';
   $('plan-models').textContent = describeModels(planned.model_selection);
     }).catch(e => error(e.message));
   }
 }
 $('language').onchange = () => setLanguage($('language').value);
-setLanguage(language);
+restorePreferences(); setLanguage(language);
 if (location.protocol === 'file:') {
   $('launch-help').hidden = false;
   document.querySelector('.sidebar').hidden = true; document.querySelector('main').hidden = true;

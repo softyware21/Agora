@@ -842,3 +842,14 @@ html[lang="ko"] h1,html[lang="ko"] .verdict h2,html[lang="ko"] .judgment-section
   .evidence-legend dd { line-height:1.6; }
   .judgment-section { padding:20px 16px; }
 }
+
+#advanced-settings { margin-top:28px; }
+#advanced-settings > summary { color:var(--muted); font-size:13px; }
+#simple-budget { margin:14px 0; }
+#ask { min-width:210px; padding:16px 26px; }
+.conclusion { margin:24px 0; padding:26px; background:#fffaf0; border-top:4px double #b09a68; }
+.conclusion > h2 { margin-top:0; }
+#issue-details { margin-top:30px; }
+.judgment-section > summary { cursor:pointer; font-size:14px; }
+.judgment-section[open] > summary { margin-bottom:24px; }
+@media(max-width:600px) { .conclusion { padding:20px 16px; } #ask { width:100%; } }
