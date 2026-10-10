@@ -18,7 +18,11 @@ in those instructions uses port 8765; use the printed address for other ports.
 
 ## Start a discussion
 
-1. Enter a question. Default models and one review round are ready to use.
+1. Enter a question. Optionally choose a purpose: open discussion, decision, claim
+   examination, or comparison. Purpose presets append instructions to the existing
+   rules when starting a new discussion; the saved rules preserve them for resume
+   and follow-up. The preview shows the purpose and makes no extra model calls.
+   Default models and one review round are ready to use.
    Open **Models & rounds** to choose named participant models, review rounds,
    or a summary provider. The summary follows that participant unless you choose
    another model under **Advanced model selection**.
@@ -94,15 +98,58 @@ shows whether reported issues remain open.
 Quote checks and model judgments remain separate; neither establishes factual
 truth. Download the complete Markdown report from the discussion view.
 
-**Revisit this issue** and **Add evidence** open a follow-up form with that
-issue's topic, reason, and next step in the editable note. The latter also opens
-the source field. Review the note and additional call count before starting.
+**Clarify the assumptions**, **Try a counterexample**, and **Bring evidence**
+open a follow-up form with the issue context and an editable instruction.
+**Bring evidence** also opens the source field. Review the note and additional
+call count before starting.
 
 **Continue discussion** opens a follow-up form. Add information, new sources, or
 different rules and models, then preview the additional calls. The original
 question remains fixed. A new directory preserves the original transcript and
 inherits earlier answers. Existing source snapshots are retained. The existing
 limits of five sources and twelve total review rounds still apply.
+
+## Evidence and response relationships
+
+Each cited position has an evidence panel scoped to its source answer. Calculation
+matches, mismatches, and unverified entries remain distinct. A source quote match
+means the quote exists in the captured source, not that it supports the claim.
+Checks may concern another claim in the same answer; the interface states this
+rather than awarding a verification badge to the whole issue.
+
+**Trace this position** links the participant's earlier answers. When a saved
+summary attribution has both a matching quote and valid full-answer visibility,
+the view also exposes the reported response relationship and both turn links.
+This confirms the text and available context only. It does not establish that a
+model changed its mind, was persuaded, or addressed the selected issue. Without
+such a record, the interface says no confirmed relationship is available.
+
+Follow-up actions let the user bring evidence, clarify assumptions and criteria,
+or ask for a counterexample. They prepare an editable supplement and still
+require reviewing the additional calls before starting. A user may also record a
+judgment without running another round, including after the round limit.
+
+## Personal judgment
+
+Save a decision, its reason, and remaining questions at the end of a discussion.
+These fields go to `judgment.json` beside the transcript, not into the transcript,
+prompts, reports, or continuation snapshots. They are private local notes, limited
+to 4,000 characters each. A follow-up starts with an empty judgment of its own.
+
+Drafts survive language changes and navigation between discussions in the same
+page. Save before closing or refreshing; unsaved drafts are held in page memory
+and trigger the browser's leave-page warning when supported. A revision check
+and a separate OS lock prevent simultaneous saves from silently replacing each
+other. On conflict, keep a copy of the draft before using **Discard draft and
+reload saved notes**. Unreadable notes do not prevent reading the discussion,
+and the interface refuses to overwrite them.
+
+## Visual direction
+
+The interface borrows limestone, olive, and terracotta colors, column-like marks,
+and restrained geometric borders from the idea of an agora. It uses local fonts
+and CSS rather than remote assets. Functional labels remain literal: the visual
+motif does not replace evidence states, controls, or readable contrast.
 
 ## Local boundaries
 
