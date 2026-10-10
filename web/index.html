@@ -36,6 +36,10 @@
       <h1 id="editor-title">What deserves<br>a second perspective?</h1>
       <p class="intro" id="editor-intro">Give two models something to work through. See where they agree, where they differ, and what still needs evidence.</p>
       <form id="setup">
+        <div id="purpose-wrap" class="purpose-wrap"><label for="purpose">What would you like to work out?</label>
+          <select id="purpose"><option value="general">Open discussion</option><option value="decision">Make a decision</option><option value="verify">Examine a claim</option><option value="compare">Compare alternatives</option></select>
+          <p id="purpose-hint" class="hint"></p>
+        </div>
         <label for="question">Your question</label>
         <textarea id="question" rows="4" maxlength="12000" required placeholder="Describe a decision, challenge an assumption, or examine a proposal…"></textarea>
         <div id="note-wrap" hidden><label for="note">New information or focus</label><textarea id="note" rows="3" maxlength="8000" placeholder="What should the next round reconsider?"></textarea></div>
@@ -65,7 +69,7 @@
         <div class="form-actions"><button type="submit" id="preview" class="primary">Review setup <span>→</span></button><span class="hint">Previewing uses no model calls.</span></div>
       </form>
       <section id="plan" class="plan" hidden aria-live="polite">
-        <div><div class="section-label">BEFORE YOU START</div><h2 id="plan-count"></h2><p id="plan-models"></p><p class="hint">Remaining subscription allowance: unavailable. Call counts do not measure tokens or remaining allowance.</p></div>
+        <div><div class="section-label">BEFORE YOU START</div><h2 id="plan-count"></h2><p id="plan-models"></p><p id="plan-purpose" class="hint"></p><p class="hint">Remaining subscription allowance: unavailable. Call counts do not measure tokens or remaining allowance.</p></div>
         <button id="start" class="primary">Start discussion →</button>
       </section>
     </section>
@@ -87,6 +91,7 @@
       </nav>
       <section id="results-view">
         <header class="verdict"><div class="eyebrow">WHERE WE STAND</div><h2 id="outcome-title"></h2><p id="outcome-intro"></p></header>
+        <dl class="evidence-legend"><div><dt>Models agree</dt><dd>A shared judgment</dd></div><div><dt>Quote found</dt><dd>Words match a record</dd></div><div><dt>Calculation checked</dt><dd>Arithmetic only</dd></div></dl>
         <p class="hint">These are model judgments. Agreement and matching quotes do not establish truth.</p>
         <div id="issue-overview" class="issue-overview"></div>
         <div id="outcome-counts" class="outcome-counts"></div>
@@ -98,6 +103,16 @@
       <section id="journey-view" hidden>
         <header class="verdict"><div class="eyebrow">HOW WE GOT HERE</div><h2>Follow the reasoning</h2><p>Read the independent views, then compare each round of review. These are saved answers, not inferred changes of mind.</p></header>
         <div id="turns"></div>
+      </section>
+      <section id="judgment-section" class="judgment-section" hidden>
+        <div class="eyebrow">YOUR JUDGMENT</div><h2>The last word is yours.</h2>
+        <p class="hint">Saved only on this computer, separately from the discussion. These notes are not sent to the models.</p>
+        <form id="judgment-form">
+          <label for="my-decision">My decision</label><textarea id="my-decision" rows="2" maxlength="4000"></textarea>
+          <label for="my-reason">Why I reached it</label><textarea id="my-reason" rows="2" maxlength="4000"></textarea>
+          <label for="my-questions">What I still need to know</label><textarea id="my-questions" rows="2" maxlength="4000"></textarea>
+          <div class="form-actions"><button id="save-judgment" class="primary" type="submit">Save my judgment</button><button id="reload-judgment" type="button">Discard draft and reload saved notes</button><span id="judgment-status" class="hint" role="status"></span></div>
+        </form>
       </section>
     </section>
     <div class="page-footer">Think together. Keep the evidence separate.</div>

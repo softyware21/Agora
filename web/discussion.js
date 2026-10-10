@@ -33,10 +33,28 @@ const AgoraDiscussion = (() => {
       turns.some(turn => turn.phase === 'summary')
     ];
   }
+  const purposes = {
+    general: '',
+    decision: 'Compare the feasible choices against explicit criteria. State assumptions, tradeoffs, and what would change the recommendation. Leave the final decision to the user.',
+    verify: 'Break the claim into checkable parts. Separate supporting evidence, counterevidence, and missing evidence. Do not treat model agreement as verification.',
+    compare: 'Compare alternatives using the same criteria. Describe tradeoffs and conditions under which each alternative is preferable. Do not invent missing facts.'
+  };
+  function purposeRules(rules, purpose) {
+    return purposes[purpose] ? `${rules}\n\nDiscussion purpose: ${purpose}. ${purposes[purpose]}` : rules;
+  }
+  function checksFor(record, turnId) {
+    const number = Number(String(turnId).slice(1));
+    return {
+      calculations: (record.calculation_checks || []).filter(row => row.turn === number).flatMap(row => row.checks || []),
+      sources: (record.source_checks || []).filter(row => row.turn === number).flatMap(row => row.checks || []),
+      responses: (record.attribution_checks || []).flatMap(row => row.checks || []).filter(check =>
+        check.turn_id === turnId && check.responds_to && check.status === 'quote_and_context_match')
+    };
+  }
   function activity(phase) {
     const [provider, step] = String(phase || '').split(': ');
     return {provider, step: ['initial', 'review', 'summary'].includes(step) ? step : 'preparing'};
   }
-  return {shortTitle, excerpt, issueGroups, rounds, stages, activity};
+  return {shortTitle, excerpt, issueGroups, rounds, stages, activity, purposes, purposeRules, checksFor};
 })();
 if (typeof module !== 'undefined') module.exports = AgoraDiscussion;

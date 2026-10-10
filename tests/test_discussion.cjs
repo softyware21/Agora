@@ -26,3 +26,12 @@ assert.equal(view.shortTitle('  A\n question  '), 'A question');
 assert.equal(view.shortTitle('A long question', 6), 'A long…');
 assert.equal(view.excerpt('# Heading\n**Keep** `text`\n```json\n{}'), 'Heading Keep text');
 console.log('Issue classification, round provenance, and progress checks passed.');
+
+assert.equal(view.purposeRules('Existing rules', 'general'), 'Existing rules');
+assert.ok(view.purposeRules('Existing rules', 'verify').startsWith('Existing rules\n\nDiscussion purpose: verify.'));
+assert.equal(view.purposeRules('Existing rules', 'unknown'), 'Existing rules');
+const checks = view.checksFor({calculation_checks:[{turn:1,checks:[{status:'arithmetic_match'}]},{turn:2,checks:[{status:'arithmetic_mismatch'}]}], source_checks:[{turn:2,checks:[{status:'quote_found'}]}], attribution_checks:[{checks:[{turn_id:'T002',responds_to:'T001',status:'context_not_available'}, {turn_id:'T002',responds_to:'T001',status:'quote_and_context_match'}]}]}, 'T002');
+assert.deepEqual(checks.calculations, [{status:'arithmetic_mismatch'}]);
+assert.equal(checks.sources.length, 1);
+assert.equal(checks.responses.length, 1);
+assert.deepEqual(view.checksFor({}, 'T001'), {calculations:[],sources:[],responses:[]});

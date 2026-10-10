@@ -1,4 +1,60 @@
 const korean = {
+  "Models agree": "모델 의견 일치",
+  "A shared judgment": "두 모델이 내린 판단",
+  "Quote found": "인용 확인",
+  "Words match a record": "원문에 해당 문구가 있음",
+  "Calculation checked": "계산 확인",
+  "Arithmetic only": "산술 결과만 확인",
+  "Declared checks: {math} arithmetic matches, {quotes} source quote matches.": "답변에 선언된 검사: 계산 일치 {math}개 · 출처 인용 일치 {quotes}개",
+
+  "What would you like to work out?": "이번 토론에서 무엇을 얻고 싶나요?",
+  "Open discussion": "자유롭게 탐색하기",
+  "Make a decision": "결정 내리기",
+  "Examine a claim": "주장 검증하기",
+  "Compare alternatives": "대안 비교하기",
+  "Explore the question from two perspectives.": "두 관점에서 질문을 자유롭게 탐색합니다.",
+  "Make criteria, tradeoffs, and conditions for a decision explicit.": "판단 기준, 장단점, 결정이 달라질 조건을 중심으로 검토합니다.",
+  "Separate supporting evidence, counterevidence, and missing information.": "주장을 뒷받침하는 근거, 반대 근거, 부족한 정보를 구분합니다.",
+  "Compare alternatives against the same criteria.": "같은 기준으로 대안의 장단점과 적합한 조건을 비교합니다.",
+  "YOUR JUDGMENT": "토론 끝에 남기는 나의 판단",
+  "The last word is yours.": "마지막 판단은 당신의 몫입니다.",
+  "Saved only on this computer, separately from the discussion. These notes are not sent to the models.": "토론 원문과 별도로 이 컴퓨터에만 저장합니다. 이 메모는 모델에게 전달되지 않습니다.",
+  "My decision": "내가 내린 결정",
+  "Why I reached it": "그렇게 판단한 이유",
+  "What I still need to know": "아직 남은 의문",
+  "Save my judgment": "내 판단 저장",
+  "Record my judgment": "내 판단 남기기",
+  "Unsaved changes": "아직 저장하지 않은 내용이 있습니다",
+  "Saving…": "저장 중…",
+  "Saved locally": "이 컴퓨터에 저장됨",
+  "No judgment recorded yet.": "아직 남긴 판단이 없습니다.",
+  "Discard draft and reload saved notes": "작성 중인 메모를 버리고 저장본 불러오기",
+  "Decision notes could not be read. Keep the original file.": "판단 메모를 읽을 수 없습니다. 원본 파일을 보존해 주세요.",
+  "Decision notes changed in another window. Reopen the discussion before saving.": "다른 창에서 메모가 변경됐습니다. 작성한 내용을 복사해 둔 뒤 저장본을 다시 불러오세요.",
+  "Evidence in this answer": "이 답변의 근거 확인",
+  "These checks cover the cited answer, not necessarily this issue. They do not verify the whole claim.": "인용된 답변에 포함된 확인 결과입니다. 다른 주장에 대한 검사일 수 있으며, 쟁점 전체가 검증됐다는 뜻은 아닙니다.",
+  "Arithmetic matched": "계산 일치",
+  "Arithmetic mismatch": "계산 불일치",
+  "Not checked": "확인되지 않음",
+  "Source quote matched": "출처 인용문 확인",
+  "Source quote not confirmed": "출처 인용문 미확인",
+  "No declared calculations or source checks.": "선언된 계산 또는 출처 확인 결과가 없습니다.",
+  "Inputs, units, and claim meaning still need review.": "입력값·단위·주장의 의미는 별도로 검토해야 합니다.",
+  "Finding a quote does not establish support for the claim.": "인용문이 존재한다고 주장을 뒷받침하는 것은 아닙니다.",
+  "Trace this position": "이 입장의 앞선 발언 살펴보기",
+  "Earlier answers may cover several issues. No change of mind is inferred.": "앞선 답변에는 여러 쟁점이 섞여 있을 수 있습니다. 입장 변화 여부를 자동으로 판정하지 않습니다.",
+  "Reported response relationship": "요약 모델이 보고한 응답 관계",
+  "The quote and available context match; the interpretation remains unverified.": "인용문과 당시 볼 수 있었던 답변은 확인됐습니다. 인용문의 해석은 검증되지 않았습니다.",
+  "No confirmed response relationship was recorded for this position.": "이 입장에 대해 확인된 응답 관계가 기록되지 않았습니다.",
+  "Clarify the assumptions": "전제와 판단 기준 정하기",
+  "Try a counterexample": "반례로 다시 검토하기",
+  "Bring evidence": "자료를 보충해 검토하기",
+  "What would help you decide?": "무엇을 확인하면 판단할 수 있을까요?",
+  "Suggested by the summarizer": "요약 모델이 제안한 다음 단계",
+  "Clarify the assumptions and decision criteria for this issue before drawing a conclusion.": "이 쟁점의 전제와 판단 기준을 명시한 뒤 결론을 다시 검토해 주세요.",
+  "Find a concrete counterexample to this conclusion and explain when it would fail.": "이 결론이 성립하지 않는 구체적인 반례와 조건을 검토해 주세요.",
+  "Review this issue using the additional evidence supplied below.": "아래에 보충한 자료를 근거로 이 쟁점을 다시 검토해 주세요.",
+  "This record has reached the follow-up limit. You can still save your judgment.": "이 기록의 추가 토론 한도에 도달했습니다. 내 판단은 계속 저장할 수 있습니다.",
   "The discussion is paused": "토론이 잠시 멈춰 있습니다",
   "Saved answers remain available. Resume the unfinished discussion to reach the synthesis.": "저장된 답변은 토론 과정에서 볼 수 있습니다. 남은 토론을 재개하면 결론 정리를 이어갑니다.",
   "TWO VIEWS. ONE QUESTION.": "하나의 질문, 두 개의 관점.",
@@ -208,7 +264,10 @@ const token = document.querySelector('meta[name="agora-token"]').content;
 let mode = 'new', parent = null, selected = null, detail = null, planPayload = null;
 let state = {job: {}, runs: []}, initialized = false, polling = false, historySignature = '', detailSignature = '';
 let focusedIssue = null, discussionView = 'results';
-const names = {agreed: 'Agreed', disputed: 'Disputed', insufficient_information: 'Needs information', unverified: 'Unverified'};
+const judgmentDrafts = new Map();
+const purposeDescriptions = {general: 'Explore the question from two perspectives.', decision: 'Make criteria, tradeoffs, and conditions for a decision explicit.', verify: 'Separate supporting evidence, counterevidence, and missing information.', compare: 'Compare alternatives against the same criteria.'};
+function renderPurpose() { $('purpose-hint').textContent = t(purposeDescriptions[$('purpose').value]); }
+const names = {agreed: 'Models agree', disputed: 'Disputed', insufficient_information: 'Needs information', unverified: 'Unverified'};
 
 async function api(path, payload) {
   const options = {headers: {'X-Agora-Token': token}};
@@ -252,11 +311,12 @@ function selection() {
     summary_provider: $('summary-provider').value, summary_model: modelValue('summary')};
 }
 function payload() {
-  return {mode, parent, question: $('question').value, rules: $('rules').value, rounds: Number($('rounds').value),
+  return {mode, parent, question: $('question').value, rules: mode === 'new' ? AgoraDiscussion.purposeRules($('rules').value, $('purpose').value) : $('rules').value, rounds: Number($('rounds').value),
     source_urls: $('sources').value.split('\n').map(s => s.trim()).filter(Boolean), note: $('note').value,
     model_selection: selection(), timeout: Number($('timeout').value), deadline: Number($('deadline').value)};
 }
 function edit(nextMode = 'new', record = null, id = null) {
+  $('purpose').value = 'general'; $('purpose-wrap').hidden = nextMode !== 'new'; renderPurpose();
   mode = nextMode; parent = id; selected = null; detailSignature = ''; invalidate(); error('');
   $('editor').hidden = false; $('discussion').hidden = true;
   $('editor-title').textContent = mode === 'new' ? t('What deserves a second perspective?') : mode === 'resume' ? t('Pick up where you left off.') : t('What should we reconsider?');
@@ -299,6 +359,7 @@ async function openRun(id) {
   selected = id; focusedIssue = null; setDiscussionView(state.job.active && state.job.run_id === id ? 'journey' : 'results'); detail = null; detailSignature = ''; $('editor').hidden = true; $('discussion').hidden = false;
   $('discussion-title').textContent = t('Loading discussion…'); $('issues').replaceChildren(); $('turns').replaceChildren();
   $('resume').hidden = $('continue').hidden = $('download').hidden = $('back-setup').hidden = $('stop').hidden = true;
+  $('judgment-section').hidden = true;
   $('summary-section').hidden = $('run-error').hidden = $('issue-inspector').hidden = $('full-question').hidden = true;
   $('issue-overview').replaceChildren(); $('debate-stages').replaceChildren(); $('outcome-title').textContent = ''; $('outcome-intro').textContent = ''; $('outcome-counts').replaceChildren();
   $('progress').closest('.progress-card').classList.remove('complete');
@@ -332,6 +393,7 @@ function renderDetail(data) {
   $('resume').disabled = $('continue').disabled = !!job.active;
   $('stop').hidden = !active; $('stop').disabled = !!job.stopping; $('download').hidden = false;
   renderOutcomes(data);
+  renderJudgment(data);
   $('summary-section').hidden = !record.summary; $('summary-text').replaceChildren(renderAnswer(record.summary || '', t));
   renderJourney(record, open);
 }
@@ -400,24 +462,92 @@ function renderIssue(data, issue) {
         };
         card.append(link);
       }
+      const checks = AgoraDiscussion.checksFor(record, position.turn_id);
+      card.append(node('p', t(checks.calculations.length || checks.sources.length ? 'Declared checks: {math} arithmetic matches, {quotes} source quote matches.' : 'No declared calculations or source checks.', {math: checks.calculations.filter(check => check.status === 'arithmetic_match').length, quotes: checks.sources.filter(check => check.status === 'quote_found').length}), 'evidence-summary'));
+      card.append(evidencePanel(record, position.turn_id), positionTrace(record, position));
     } else card.append(node('p', t('No attributable position was recorded.'), 'hint'));
     positions.append(card);
   }
   $('issues').append(positions);
-  const next = node('div', undefined, 'next-step'); next.append(node('strong', t('Next useful step')), node('p', issue.next_step || t('Unavailable'))); $('issues').append(next);
-  if (issue.status !== 'agreed' && data.can_continue) {
-    const actions = node('div', undefined, 'toolbar');
-    for (const evidence of [false, true]) {
-      const button = node('button', t(evidence ? 'Add evidence' : 'Revisit this issue'), evidence ? '' : 'primary'); button.disabled = !!state.job.active;
+  const next = node('div', undefined, 'next-step');
+  next.append(node('strong', t('What would help you decide?')), node('p', issue.next_step || t('Unavailable')), node('small', t('Suggested by the summarizer'), 'hint'));
+  $('issues').append(next);
+  if (data.can_continue) {
+    const actions = node('div', undefined, 'next-actions');
+    const choices = issue.status === 'insufficient_information' ? ['evidence', 'criteria', 'counterexample'] : ['criteria', 'counterexample', 'evidence'];
+    for (const choice of choices) {
+      const labels = {evidence: 'Bring evidence', criteria: 'Clarify the assumptions', counterexample: 'Try a counterexample'};
+      const instructions = {evidence: 'Review this issue using the additional evidence supplied below.', criteria: 'Clarify the assumptions and decision criteria for this issue before drawing a conclusion.', counterexample: 'Find a concrete counterexample to this conclusion and explain when it would fail.'};
+      const button = node('button', t(labels[choice])); button.disabled = !!state.job.active;
       button.onclick = () => {
-        edit('continue', record, data.id); $('note').value = [issue.topic, issue.reason, issue.next_step].filter(Boolean).join('\n');
-        if (evidence) { $('sources').closest('details').open = true; $('sources').focus(); } else $('note').focus();
+        edit('continue', record, data.id); $('note').value = [issue.topic, issue.reason, issue.next_step, t(instructions[choice])].filter(Boolean).join('\n');
+        if (choice === 'evidence') { $('sources').closest('details').open = true; $('sources').focus(); } else $('note').focus();
       };
       actions.append(button);
     }
     $('issues').append(actions);
-  }
+  } else if (record.status === 'completed' && record.rounds >= 12) $('issues').append(node('p', t('This record has reached the follow-up limit. You can still save your judgment.'), 'hint'));
+  const decide = node('button', t('Record my judgment'), 'text-button');
+  decide.onclick = () => { $('judgment-section').scrollIntoView({behavior: 'smooth'}); $('my-decision').focus({preventScroll: true}); };
+  $('issues').append(decide);
 }
+function turnLink(record, turnId) {
+  const button = node('button', turnId, 'turn-link');
+  const index = record.turns.findIndex((_, i) => `T${String(i + 1).padStart(3, '0')}` === turnId);
+  button.disabled = index < 0;
+  button.onclick = () => { setDiscussionView('journey'); const answer = $(`turn-${index}`); if (answer) { answer.open = true; answer.scrollIntoView({behavior: 'smooth'}); answer.querySelector('summary').focus(); } };
+  return button;
+}
+function evidencePanel(record, turnId) {
+  const checks = AgoraDiscussion.checksFor(record, turnId), panel = node('details', undefined, 'evidence-panel');
+  panel.append(node('summary', t('Evidence in this answer')), node('p', t('These checks cover the cited answer, not necessarily this issue. They do not verify the whole claim.'), 'hint'));
+  if (!checks.calculations.length && !checks.sources.length) panel.append(node('p', t('No declared calculations or source checks.'), 'hint'));
+  for (const check of checks.calculations) {
+    const row = node('div', undefined, 'check-row');
+    row.append(node('strong', t(check.status === 'arithmetic_match' ? 'Arithmetic matched' : check.status === 'arithmetic_mismatch' ? 'Arithmetic mismatch' : 'Not checked')), node('p', check.claim), node('code', `${check.expression} = ${check.actual ?? '?'}`), node('p', t('Inputs, units, and claim meaning still need review.'), 'hint')); panel.append(row);
+  }
+  for (const check of checks.sources) {
+    const row = node('div', undefined, 'check-row'); row.append(node('strong', t(check.status === 'quote_found' ? 'Source quote matched' : 'Source quote not confirmed')), node('p', check.claim), node('blockquote', check.quote), node('p', `${check.source_id || ''} · ${t('Finding a quote does not establish support for the claim.')}`, 'hint'));
+    if (check.url && /^https:\/\//.test(check.url)) { const link = node('a', check.url); link.href = check.url; link.target = '_blank'; link.rel = 'noopener noreferrer'; row.append(link); }
+    panel.append(row);
+  }
+  return panel;
+}
+function positionTrace(record, position) {
+  const trace = node('details', undefined, 'position-trace');
+  trace.append(node('summary', t('Trace this position')), node('p', t('Earlier answers may cover several issues. No change of mind is inferred.'), 'hint'));
+  const relationships = AgoraDiscussion.checksFor(record, position.turn_id).responses;
+  if (!relationships.length) trace.append(node('p', t('No confirmed response relationship was recorded for this position.'), 'hint'));
+  for (const link of relationships) {
+    const row = node('div', undefined, 'check-row');
+    row.append(node('strong', t('Reported response relationship')), node('p', link.claim), node('blockquote', link.quote), turnLink(record, link.responds_to), node('span', ' → '), turnLink(record, link.turn_id), node('p', t('The quote and available context match; the interpretation remains unverified.'), 'hint')); trace.append(row);
+  }
+  record.turns.forEach((turn, index) => {
+    const id = `T${String(index + 1).padStart(3, '0')}`;
+    if (turn.provider === position.provider && turn.phase !== 'summary' && id <= position.turn_id) {
+      const row = node('p'); row.append(turnLink(record, id), node('span', ` · ${turn.phase === 'initial' ? t('Independent views') : t('Review round {round}', {round: turn.round})}`)); trace.append(row);
+    }
+  });
+  return trace;
+}
+function renderJudgment(data) {
+  $('judgment-section').hidden = false;
+  for (const id of ['my-decision', 'my-reason', 'my-questions']) $(id).disabled = !data.judgment;
+  if (!data.judgment) {
+    for (const id of ['my-decision', 'my-reason', 'my-questions']) $(id).value = '';
+    $('save-judgment').disabled = true; $('judgment-status').textContent = t(data.judgment_error || 'Unavailable'); return;
+  }
+  let draft = judgmentDrafts.get(data.id);
+  if (!draft || (!draft.dirty && !draft.saving)) {
+    draft = {...data.judgment, dirty: false, saving: false}; judgmentDrafts.set(data.id, draft);
+  }
+  for (const [id, key] of [['my-decision', 'decision'], ['my-reason', 'reason'], ['my-questions', 'open_questions']]) {
+    if ($(id).value !== draft[key]) $(id).value = draft[key];
+  }
+  $('save-judgment').disabled = draft.saving; $('reload-judgment').disabled = draft.saving;
+  $('judgment-status').textContent = t(draft.saving ? 'Saving…' : draft.dirty ? 'Unsaved changes' : draft.revision ? 'Saved locally' : 'No judgment recorded yet.');
+}
+
 function renderJourney(record, open) {
   $('turns').replaceChildren();
   const groups = AgoraDiscussion.rounds(record.turns);
@@ -482,6 +612,31 @@ async function poll() {
   } catch (e) { $('connection').hidden = false; }
   finally { polling = false; }
 }
+$('purpose').onchange = () => { renderPurpose(); invalidate(); };
+$('judgment-form').addEventListener('input', () => {
+  const draft = judgmentDrafts.get(selected); if (!draft) return;
+  draft.decision = $('my-decision').value; draft.reason = $('my-reason').value; draft.open_questions = $('my-questions').value; draft.dirty = true;
+  $('judgment-status').textContent = t('Unsaved changes');
+});
+$('reload-judgment').onclick = () => act(async () => {
+  const id = selected, refreshed = await api(`/api/runs/${encodeURIComponent(id)}`);
+  if (selected !== id) return;
+  judgmentDrafts.delete(id); detail = refreshed; renderJudgment(refreshed);
+});
+$('judgment-form').onsubmit = event => { event.preventDefault(); act(async () => {
+  const id = selected, draft = judgmentDrafts.get(id); if (!draft || draft.saving) return;
+  const sent = {run_id: id, revision: draft.revision, decision: draft.decision, reason: draft.reason, open_questions: draft.open_questions};
+  draft.saving = true; renderJudgment(detail);
+  try {
+    const saved = await api('/api/judgment', sent);
+    draft.revision = saved.revision; draft.updated_at = saved.updated_at;
+    draft.dirty = ['decision', 'reason', 'open_questions'].some(key => draft[key] !== sent[key]);
+    if (detail?.id === id) detail.judgment = saved;
+  } finally { draft.saving = false; if (selected === id && detail) renderJudgment(detail); }
+}); };
+window.addEventListener('beforeunload', event => {
+  if ([...judgmentDrafts.values()].some(draft => draft.dirty)) { event.preventDefault(); event.returnValue = ''; }
+});
 $('show-results').onclick = () => setDiscussionView('results');
 $('show-journey').onclick = () => setDiscussionView('journey');
 $('new').onclick = () => edit();
@@ -508,6 +663,7 @@ $('setup').onsubmit = event => { event.preventDefault(); act(async () => {
   const requested = payload(), planned = await api('/api/plan', requested);
   if (JSON.stringify(requested) !== JSON.stringify(payload())) return;
   planPayload = requested; $('plan-count').textContent = t('{count} calls · GPT {gpt} / Claude {claude}', {count: planned.calls, gpt: planned.by_provider.codex, claude: planned.by_provider.claude});
+  $('plan-purpose').textContent = mode === 'new' ? t(purposeDescriptions[$('purpose').value]) : '';
   $('plan-models').textContent = describeModels(planned.model_selection); $('plan').hidden = false; $('start').disabled = !!state.job.active;
   $('plan').scrollIntoView({behavior: 'smooth', block: 'nearest'});
 }); };
@@ -539,7 +695,7 @@ function setLanguage(value) {
   const customKinds = ['codex', 'claude', 'summary'].filter(kind => $(`${kind}-model`).value === '__custom').map(kind => [kind, $(`${kind}-custom`).value]);
   language = value;
   try { localStorage.setItem('agora.language', value); } catch (_) { /* Keep the selection for this page. */ }
-  document.documentElement.lang = value;
+  document.documentElement.lang = value; renderPurpose();
   document.title = `Agora — ${t('A place to think it through.')}`;
   $('language').value = value;
   for (const [text, original] of staticText) {
@@ -563,7 +719,8 @@ function setLanguage(value) {
     api('/api/plan', requested).then(planned => {
       if (planPayload !== requested) return;
       $('plan-count').textContent = t('{count} calls · GPT {gpt} / Claude {claude}', {count: planned.calls, gpt: planned.by_provider.codex, claude: planned.by_provider.claude});
-      $('plan-models').textContent = describeModels(planned.model_selection);
+      $('plan-purpose').textContent = mode === 'new' ? t(purposeDescriptions[$('purpose').value]) : '';
+  $('plan-models').textContent = describeModels(planned.model_selection);
     }).catch(e => error(e.message));
   }
 }
