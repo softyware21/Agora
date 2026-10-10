@@ -23,3 +23,16 @@ root = render('```\n# Not a heading\n<script>');
 assert.equal(all(root).filter(x => x.tag === 'h2').length, 0);
 assert.ok(all(root).some(x => x.tag === 'code' && x.textContent.includes('<script>')));
 console.log('Answer formatting and unsafe-output checks passed.');
+
+const grouped = 'Start\n```agora-calculations\n[]\n```\n```agora-sources\n[]\n```\nEnd';
+root = render(grouped);
+assert.equal(all(root).filter(x => x.className === 'discussion-data').length, 1);
+assert.equal(all(root).filter(x => x.tag === 'details').length, 2);
+assert.ok(all(root).some(x => x.tag === 'pre' && x.textContent === grouped));
+for (const raw of ['```agora-issues\n{broken}\n```', '```agora-issues\n[]', '```agora-unknown\n[]\n```']) {
+  root = render(raw);
+  assert.equal(all(root).filter(x => x.className === 'discussion-data').length, 0);
+  assert.ok(all(root).some(x => x.tag === 'code'));
+  assert.ok(all(root).some(x => x.tag === 'pre' && x.textContent === raw));
+}
+console.log('Grouped data retains the original; malformed and unknown blocks remain visible.');

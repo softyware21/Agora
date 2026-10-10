@@ -23,6 +23,9 @@ function renderAnswer(text, translate = value => value, doc = document) {
     target.append(doc.createTextNode(value.slice(offset)));
   }
   const root = el('div'); root.className = 'prose';
+  const data = el('details'); data.className = 'discussion-data';
+  data.append(el('summary', translate('Discussion data')));
+  let dataCount = 0;
   const lines = String(text || '').replaceAll('\r\n', '\n').split('\n');
   const cells = line => line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim());
   for (let i = 0; i < lines.length;) {
@@ -32,11 +35,19 @@ function renderAnswer(text, translate = value => value, doc = document) {
     if (fence) {
       const content = [], marker = fence[1], label = fence[2].trim(); i++;
       while (i < lines.length && !new RegExp(`^\\s*${marker[0]}{${marker.length},}\\s*$`).test(lines[i])) content.push(lines[i++]);
-      if (i < lines.length) i++;
+      const closed = i < lines.length;
+      if (closed) i++;
       const pre = el('pre'); pre.append(el('code', content.join('\n')));
-      if (label.startsWith('agora-')) {
-        const details = el('details'); details.append(el('summary', translate('Verification data')), pre); root.append(details);
-      } else root.append(pre);
+      const known = ['agora-issues', 'agora-attributions', 'agora-calculations', 'agora-sources', 'agora-source-reviews', 'agora-result'].includes(label);
+      let parsed = false;
+      if (known && closed) {
+        try { const value = JSON.parse(content.join('\n')); parsed = value !== null && typeof value === 'object'; } catch (_) { /* Keep malformed data visible. */ }
+      }
+      if (parsed) { data.append(el('h4', label), pre); dataCount++; }
+      else {
+        if (known) root.append(el('p', translate('This discussion data could not be read. Its original content is shown below.')));
+        root.append(pre);
+      }
       continue;
     }
     if (line.includes('|') && i + 1 < lines.length && cells(lines[i + 1]).every(cell => /^:?-{3,}:?$/.test(cell))) {
@@ -69,6 +80,7 @@ function renderAnswer(text, translate = value => value, doc = document) {
     const block = el(line.startsWith('> ') ? 'blockquote' : 'p');
     inline(block, line.startsWith('> ') ? line.slice(2) : line); root.append(block); i++;
   }
+  if (dataCount) root.append(data);
   const source = el('details'); source.className = 'source-text';
   source.append(el('summary', translate('Source text')), el('pre', text || '')); root.append(source);
   return root;

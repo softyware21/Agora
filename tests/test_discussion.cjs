@@ -35,3 +35,18 @@ assert.deepEqual(checks.calculations, [{status:'arithmetic_mismatch'}]);
 assert.equal(checks.sources.length, 1);
 assert.equal(checks.responses.length, 1);
 assert.deepEqual(view.checksFor({}, 'T001'), {calculations:[],sources:[],responses:[]});
+
+const result = {version:1, conclusion:'Choose A.', conditions:['Only within the stated budget.'], reasons:['A meets the requirement.'], next_steps:[]};
+const block = value => '```agora-result\n' + JSON.stringify(value) + '\n```';
+assert.deepEqual(view.resultCard(block(result)), {conclusion:result.conclusion, conditions:result.conditions, reasons:result.reasons, next_steps:[]});
+assert.equal(view.resultCard('A legacy summary.'), null);
+assert.equal(view.resultCard(block(result) + '\n' + block(result)), null);
+assert.equal(view.resultCard('```agora-result\n{broken}\n```'), null);
+assert.equal(view.resultCard('```agora-result\n' + JSON.stringify(result)), null);
+for (const change of [{version:2}, {conditions:[]}, {conditions:['']}, {conclusion:'x'.repeat(601)}, {reasons:'not a list'}, {next_steps:[{}]}, {warnings:['A hidden important condition']}]) {
+  assert.equal(view.resultCard(block({...result,...change})), null);
+}
+const hostile = {...result, conclusion:'<img src=x onerror=alert(1)>'};
+assert.equal(view.resultCard(block(hostile)).conclusion, hostile.conclusion);
+assert.ok(view.resultInstruction.includes('material assumptions'));
+console.log('Concise results reject incomplete, duplicate, and unexpected structures.');
