@@ -6,9 +6,11 @@ from pathlib import Path
 import re
 import tempfile
 import threading
+import time
 import uuid
 
 import agora
+import automatic
 import continue_debate
 import models
 import judgment
@@ -80,6 +82,7 @@ class App:
 
     def history(self):
         result = []
+        superseded = set()
         if not self.root.exists():
             return result
         for folder in sorted(self.root.iterdir(), key=lambda p: p.name, reverse=True):
@@ -87,12 +90,14 @@ class App:
                 continue
             try:
                 record = self.record(folder.name)
+                if automatic.load(folder) and record.get('continuation'):
+                    superseded.add(Path(record['continuation']['parent_directory']).name)
                 result.append({'id': folder.name, 'question': record['question'], 'status': record['status'],
                                'started_at': record.get('started_at'), 'turns': len(record['turns']),
                                'outcomes': [item['status'] for item in record.get('issue_outcomes', {}).get('issues', [])]})
             except (ValueError, OSError, run_state.StateError):
                 result.append({'id': folder.name, 'question': 'Unreadable discussion', 'status': 'unavailable', 'turns': 0})
-        return sorted(result, key=lambda item: item.get('started_at') or '', reverse=True)
+        return sorted([item for item in result if item['id'] not in superseded], key=lambda item: item.get('started_at') or '', reverse=True)
 
     def detail(self, run_id):
         record = self.record(run_id)
@@ -101,7 +106,10 @@ class App:
             note, note_error = judgment.load(self.folder(run_id)), None
         except (ValueError, OSError):
             note, note_error = None, 'Decision notes could not be read. Keep the original file.'
-        return {'id': run_id, 'record': record, 'judgment': note, 'judgment_error': note_error,
+        policy = automatic.load(self.folder(run_id))
+        previous = record.get('continuation', {}).get('parent_directory') if policy else None
+        return {'id': run_id, 'record': record, 'judgment': note, 'judgment_error': note_error, 'automatic': policy,
+                'previous_run': Path(previous).name if previous else None,
                 'can_resume': mixed and record['status'] != 'completed' and record['prompt_version'] == agora.prompt_version(),
                 'can_continue': mixed and record['status'] == 'completed' and record['rounds'] < 12}
 
@@ -153,7 +161,21 @@ class App:
             pending = run_state.steps(rounds, selection)[2 if parent else 0:]
             settings = {'question': question, 'rules': rules, 'rounds': rounds, 'source_urls': urls,
                         'model_selection': selection, 'note': note}
-        return {'mode': mode, 'parent': parent_id, 'timeout': timeout, 'deadline': deadline, **settings,
+        policy = automatic.load(self.folder(parent_id)) if mode == 'resume' else None
+        automatic_mode = payload.get('automatic', False)
+        if type(automatic_mode) is not bool:
+            raise ValueError('Automatic review must be a boolean.')
+        if mode != 'resume' and automatic_mode:
+            target = (parent['rounds'] if parent else 0) + rounds
+            policy = {'target_round': target, 'reason': 'running', 'previous': ''}
+            settings['rounds'] = 1
+            pending = run_state.steps(1, selection)[2 if parent else 0:]
+        if policy:
+            current_round = record['rounds'] if mode == 'resume' else (parent['rounds'] if parent else 0) + 1
+            pending += [(name, phase, number) for number in range(current_round + 1, policy['target_round'] + 1)
+                        for name, phase in [('codex', 'review'), ('claude', 'review'),
+                                            (models.validate(selection)['summary_provider'], 'summary')]]
+        return {'automatic': policy, 'mode': mode, 'parent': parent_id, 'timeout': timeout, 'deadline': deadline, **settings,
                 'calls': len(pending), 'by_provider': {name: sum(n == name for n, _, _ in pending) for name in ('codex', 'claude')},
                 'models': models.describe(selection), 'allowance': 'unavailable'}
 
@@ -164,7 +186,7 @@ class App:
                 raise ValueError('A discussion is already running. Wait for it to finish or stop it first.')
             run_id = plan['parent'] if plan['mode'] == 'resume' else 'ui-' + datetime.now().strftime('%Y%m%d-%H%M%S') + '-' + uuid.uuid4().hex[:6]
             self.stopped = threading.Event()
-            self.job = {'status': 'running', 'run_id': run_id, 'phase': 'Preparing discussion', 'error': None}
+            self.job = {'status': 'running', 'run_id': run_id, 'origin': run_id, 'phase': 'Preparing discussion', 'error': None}
             self.thread = threading.Thread(target=self.work, args=(copy.deepcopy(plan), run_id), name='agora-discussion')
             self.thread.start()
         return {'run_id': run_id}
@@ -174,6 +196,7 @@ class App:
             self.job['phase'] = text
 
     def work(self, plan, run_id):
+        policy = plan['automatic']
         try:
             folder = self.folder(run_id)
             selection = plan['model_selection']
@@ -184,15 +207,46 @@ class App:
                 rounds = record['rounds']
             else:
                 rounds = plan['rounds']
+            if policy:
+                automatic.save(folder, dict(policy, reason='running'))
+            deadline = time.monotonic() + plan['deadline']
             with tempfile.TemporaryDirectory(prefix='agora-ui-') as isolated:
                 providers = {key: ControlledProvider(provider, self.stopped, self.progress)
                              for key, provider in self.factory(isolated, selection).items()}
-                agora.debate(providers, plan['question'], plan['rules'], rounds, plan['timeout'], folder,
-                    deadline_seconds=plan['deadline'], resume=resume,
-                    source_urls=plan['source_urls'] if not resume else None, model_selection=selection)
+                while True:
+                    remaining = deadline - time.monotonic()
+                    if remaining < 1:
+                        raise agora.AgoraError('The overall execution deadline was reached.', 'deadline')
+                    record = agora.debate(providers, plan['question'], plan['rules'], rounds, plan['timeout'], folder,
+                        deadline_seconds=remaining, resume=resume,
+                        source_urls=plan['source_urls'] if not resume else None, model_selection=selection)
+                    if not policy:
+                        break
+                    reason, signature = automatic.assess(record, policy)
+                    if self.stopped.is_set():
+                        reason = 'user_stop'
+                    elif time.monotonic() >= deadline and reason == 'running':
+                        reason = 'deadline'
+                    policy = dict(policy, reason=reason, previous=signature)
+                    automatic.save(folder, policy)
+                    if reason != 'running':
+                        break
+                    next_id = 'ui-' + datetime.now().strftime('%Y%m%d-%H%M%S') + '-' + uuid.uuid4().hex[:6]
+                    child = self.folder(next_id)
+                    record = continue_debate.prepare(folder, child, 1,
+                        'Reassess the remaining disputed issues. Address counterarguments and state what would change your conclusion. Do not force agreement.')
+                    automatic.save(child, policy)
+                    folder, rounds, resume = child, record['rounds'], True
+                    with self.lock:
+                        self.job['run_id'] = next_id
             with self.lock:
                 self.job.update(status='completed', phase='Completed')
         except (agora.AgoraError, run_state.StateError, ValueError, OSError) as exc:
+            if plan['automatic'] and getattr(exc, 'reason', None) in ('user_stop', 'deadline'):
+                try:
+                    automatic.save(folder, dict(policy, reason=exc.reason))
+                except (ValueError, OSError):
+                    pass
             with self.lock:
                 self.job.update(status='stopped', phase='Stopped', error=str(exc))
         except Exception:
