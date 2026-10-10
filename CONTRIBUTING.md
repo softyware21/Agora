@@ -37,6 +37,18 @@ Never commit authentication files, tokens, local transcripts, account identifier
 provider binaries, private configuration, or machine-specific absolute paths.
 Use synthetic examples and inspect the staged diff before committing.
 
+## Using Agora during development
+
+Start with a reproducible problem, observed results, and a bounded question. Ask
+the participants to compare proposed changes, identify tradeoffs, and suggest
+acceptance checks. Set a call and time limit before running a live discussion.
+
+Review the recommendation against the code and evidence before implementing it.
+Model agreement is a proposal, not a passing test or a substitute for user feedback.
+Keep local discussions out of Git; record the chosen scope and validation in the
+issue and commits. Reuse saved examples for offline checks before spending more
+subscription allowance on live runs.
+
 ## Pull requests
 
 Describe the problem and resulting behavior, relevant validation, and remaining

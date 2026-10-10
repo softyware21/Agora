@@ -37,6 +37,18 @@ usable conclusion, reasons, uncertainty, and conditions that could change it.
 These instructions do not add a separate classification call. Models may ask for
 missing information in the result; there is no preflight interview.
 
+New UI discussions request an optional `agora-result` block alongside the full
+synthesis. A valid block shows the conclusion, conditions and uncertainty, reasons,
+and next steps. Conditions stay expanded. The full synthesis and original text
+remain available below, and unresolved issue topics remain visible separately.
+Completed execution details follow the result instead of preceding it.
+
+The card parser checks the version, fields, types, and length limits, not whether
+the model preserved every important qualification. Missing or invalid cards fall
+back to the full synthesis. Existing records and saved prompts are not rewritten.
+Recognized JSON data blocks share one disclosure; malformed blocks remain visible.
+Requested language and faithful summarization still depend on the model.
+
 Model menus are curated suggestions, not a live account catalog. A summary uses
 its participant's model unless an override is selected. Account availability is
 checked by the provider when called. One job can run at a time in this server.
