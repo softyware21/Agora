@@ -1,4 +1,56 @@
 const korean = {
+  "The discussion is paused": "토론이 잠시 멈춰 있습니다",
+  "Saved answers remain available. Resume the unfinished discussion to reach the synthesis.": "저장된 답변은 토론 과정에서 볼 수 있습니다. 남은 토론을 재개하면 결론 정리를 이어갑니다.",
+  "TWO VIEWS. ONE QUESTION.": "하나의 질문, 두 개의 관점.",
+  "Full question": "질문 전체 보기",
+  "Models & execution details": "사용 모델 및 실행 정보",
+  "Discussion stages": "토론 단계",
+  "Discussion views": "토론 보기 방식",
+  "Where we stand": "현재 결론",
+  "How we got here": "토론 과정",
+  "WHERE WE STAND": "지금까지 도달한 결론",
+  "HOW WE GOT HERE": "이 결론에 이르기까지",
+  "Follow the reasoning": "서로의 주장을 어떻게 검토했나요?",
+  "Read the independent views, then compare each round of review. These are saved answers, not inferred changes of mind.": "독립적으로 작성한 첫 의견부터 라운드별 검토까지 비교해 보세요. 실제 저장된 답변을 보여주며, 입장 변화를 추정하지 않습니다.",
+  "Read the full synthesis": "종합 요약 전체 읽기",
+  "Independent views": "독립적인 첫 의견",
+  "Cross-review": "서로의 주장 검토",
+  "Synthesis": "결론 정리",
+  "{provider} is forming an independent view": "{provider}가 독립적인 의견을 작성하고 있습니다",
+  "{provider} is reviewing earlier arguments": "{provider}가 앞선 주장을 검토하고 있습니다",
+  "{provider} is bringing the discussion together": "{provider}가 토론의 결론을 정리하고 있습니다",
+  "Questions remain open": "아직 풀리지 않은 쟁점이 있습니다",
+  "Common ground has emerged": "함께 도달한 결론이 있습니다",
+  "The conclusions are still taking shape": "각자의 관점을 모으고 있습니다",
+  "The issue assessment is unavailable": "쟁점별 결론을 확인할 수 없습니다",
+  "Read the open questions, compare the cited positions, and decide what needs another round.": "남은 쟁점과 두 모델의 입장을 확인하고, 무엇을 더 검토할지 결정하세요.",
+  "The reported issues are agreed. Review their evidence before relying on the conclusions.": "보고된 쟁점에서는 의견이 모였습니다. 결론을 활용하기 전에 근거를 확인하세요.",
+  "Follow the saved answers while the discussion runs. Issue outcomes appear after synthesis.": "토론 과정에서 저장된 답변을 먼저 볼 수 있습니다. 쟁점별 결론은 정리가 끝나면 표시됩니다.",
+  "Read the saved answers or full synthesis; missing outcomes do not imply agreement.": "저장된 답변이나 종합 요약을 확인하세요. 쟁점 결과가 없다고 합의된 것은 아닙니다.",
+  "Common ground": "함께 도달한 결론",
+  "Still open": "남은 쟁점",
+  "No common ground reported yet.": "아직 보고된 합의가 없습니다.",
+  "No open issues reported.": "보고된 미해결 쟁점이 없습니다.",
+  "Select an issue to compare the positions behind it.": "쟁점을 선택하면 두 모델의 입장과 근거를 비교할 수 있습니다.",
+  "Positions cited by the summarizer": "요약 모델이 인용한 두 입장",
+  "Quote found in the cited answer": "인용한 답변에서 문구 확인됨",
+  "Citation could not be confirmed": "인용을 확인할 수 없음",
+  "No attributable position was recorded.": "출처를 확인할 수 있는 입장이 기록되지 않았습니다.",
+  "Open cited answer": "인용된 답변 보기",
+  "Next useful step": "다음에 확인할 내용",
+  "Review round {round}": "{round}차 상호 검토",
+  "Each participant starts with the question and supplied context.": "두 참여자가 질문과 제공된 자료를 바탕으로 첫 의견을 작성합니다.",
+  "These answers review earlier turns. Responses in the same round do not see each other.": "앞선 답변들을 검토한 내용입니다. 같은 라운드에서 작성된 상대 답변은 아직 보지 못합니다.",
+  "Read full answer": "답변 전체 읽기",
+  "Answer excerpt": "답변 발췌",
+  "Waiting for a saved answer": "답변이 저장되기를 기다리고 있습니다",
+  "No answers saved yet.": "아직 저장된 답변이 없습니다.",
+  "Open issues: {count}": "남은 쟁점 {count}개",
+  "Reported issues agreed": "보고된 쟁점 합의",
+  "Outcomes unavailable": "쟁점 결과 없음",
+  "Completed": "완료",
+  "Pending": "대기",
+  "Current stage": "진행 중인 단계",
   "Start with a question. Model and round settings are optional.": "주제부터 입력하세요. 모델과 라운드는 필요할 때 설정하면 됩니다.",
   "Models & rounds": "모델 및 라운드 설정",
   "Advanced model selection": "고급 모델 설정",
@@ -139,19 +191,23 @@ function t(text, values = {}) {
   for (const [key, value] of Object.entries(values)) result = result.replaceAll(`{${key}}`, String(value));
   return result;
 }
+function providerName(provider) { return {codex: 'GPT', claude: 'Claude'}[provider] || provider || t('Unknown'); }
 function phaseLabel(phase) {
-  return phase?.includes(': ') ? phase.split(': ').map(value => t(value)).join(': ') : t(phase || 'Preparing discussion');
+  const activity = AgoraDiscussion.activity(phase);
+  const labels = {initial: '{provider} is forming an independent view', review: '{provider} is reviewing earlier arguments', summary: '{provider} is bringing the discussion together'};
+  return labels[activity.step] ? t(labels[activity.step], {provider: providerName(activity.provider)}) : t('Preparing discussion');
 }
 function describeModels(selection) {
   const model = selection || {}, provider = model.summary_provider || 'codex';
   return t('GPT: {gpt} · Claude: {claude} · Summary: {provider} / {model}', {
     gpt: model.codex || t('Default model'), claude: model.claude || t('Default model'),
-    provider, model: model.summary_model || model[provider] || t('Default model')});
+    provider: providerName(provider), model: model.summary_model || model[provider] || t('Default model')});
 }
 const $ = id => document.getElementById(id);
 const token = document.querySelector('meta[name="agora-token"]').content;
 let mode = 'new', parent = null, selected = null, detail = null, planPayload = null;
 let state = {job: {}, runs: []}, initialized = false, polling = false, historySignature = '', detailSignature = '';
+let focusedIssue = null, discussionView = 'results';
 const names = {agreed: 'Agreed', disputed: 'Disputed', insufficient_information: 'Needs information', unverified: 'Unverified'};
 
 async function api(path, payload) {
@@ -227,7 +283,12 @@ function renderHistory() {
   if (!state.runs.length) $('history').append(node('p', t('Your first discussion will appear here.'), 'hint'));
   for (const run of state.runs) {
     const button = node('button', undefined, run.id === selected ? 'selected' : '');
-    button.append(node('span', run.status === 'unavailable' ? t(run.question) : run.question, 'history-title'), node('small', t('{status} · {count} answers', {status: run.status === 'running' ? t('Unfinished') : t(run.status), count: run.turns})));
+    button.append(node('span', run.status === 'unavailable' ? t(run.question) : AgoraDiscussion.shortTitle(run.question), 'history-title'), node('small', t('{status} · {count} answers', {status: run.status === 'running' ? t('Unfinished') : t(run.status), count: run.turns})));
+    button.title = run.status === 'unavailable' ? run.id : run.question;
+    if (run.status === 'completed') {
+      const outcomes = run.outcomes || [], remaining = outcomes.filter(status => status !== 'agreed').length;
+      button.append(node('small', remaining ? t('Open issues: {count}', {count: remaining}) : outcomes.length ? t('Reported issues agreed') : t('Outcomes unavailable'), 'history-outcome'));
+    }
     const date = new Date(run.started_at);
     if (run.started_at && !Number.isNaN(date.getTime())) button.append(node('small', date.toLocaleString(language === 'ko' ? 'ko-KR' : 'en-US')));
     if (run.status === 'unavailable') button.append(node('small', t('Record: {id}', {id: run.id})));
@@ -235,19 +296,32 @@ function renderHistory() {
   }
 }
 async function openRun(id) {
-  selected = id; detail = null; detailSignature = ''; $('editor').hidden = true; $('discussion').hidden = false;
+  selected = id; focusedIssue = null; setDiscussionView(state.job.active && state.job.run_id === id ? 'journey' : 'results'); detail = null; detailSignature = ''; $('editor').hidden = true; $('discussion').hidden = false;
   $('discussion-title').textContent = t('Loading discussion…'); $('issues').replaceChildren(); $('turns').replaceChildren();
   $('resume').hidden = $('continue').hidden = $('download').hidden = $('back-setup').hidden = $('stop').hidden = true;
-  $('summary-section').hidden = $('run-error').hidden = true; $('outcome-counts').replaceChildren();
+  $('summary-section').hidden = $('run-error').hidden = $('issue-inspector').hidden = $('full-question').hidden = true;
+  $('issue-overview').replaceChildren(); $('debate-stages').replaceChildren(); $('outcome-title').textContent = ''; $('outcome-intro').textContent = ''; $('outcome-counts').replaceChildren();
+  $('progress').closest('.progress-card').classList.remove('complete');
   $('progress').value = 0; $('progress-count').textContent = ''; $('run-models').textContent = ''; $('status').textContent = '';
   renderHistory(); await refreshDetail(id); window.scrollTo({top: 0});
 }
 function renderDetail(data) {
   const open = new Set([...$('discussion').querySelectorAll('details[open]')].map(el => el.id));
   const record = data.record, job = state.job, active = job.active && job.run_id === data.id;
-  $('discussion-title').textContent = record.question;
+  $('discussion-title').textContent = AgoraDiscussion.shortTitle(record.question, 130);
+  $('full-question').hidden = record.question.length <= 130; $('question-text').textContent = record.question;
   $('status').textContent = active ? (job.stopping ? t('Stopping') : t('In progress')) : record.status === 'running' ? t('Unfinished') : t(record.status);
+  $('progress').closest('.progress-card').classList.toggle('complete', record.status === 'completed');
   const total = 3 + 2 * record.rounds, count = record.turns.length;
+  $('debate-stages').replaceChildren();
+  const stages = AgoraDiscussion.stages(record), current = stages.findIndex(done => !done);
+  ['Independent views', 'Cross-review', 'Synthesis'].forEach((label, index) => {
+    const stage = node('li', undefined, stages[index] ? 'done' : active && current === index ? 'current' : '');
+    stage.append(node('span', String(index + 1), 'stage-number'), node('span', t(label)));
+    stage.title = t(stages[index] ? 'Completed' : active && current === index ? 'Current stage' : 'Pending');
+    if (active && current === index) stage.setAttribute('aria-current', 'step');
+    $('debate-stages').append(stage);
+  });
   $('progress').max = total; $('progress').value = count; $('progress-count').textContent = t('{count} / {total} answers saved', {count, total});
   $('progress-label').textContent = active ? (job.stopping ? t('Stopping after the current answer…') : phaseLabel(job.phase)) : record.status === 'completed' ? t('Discussion complete') : t('Ready to resume');
   const model = record.model_selection || {};
@@ -257,48 +331,122 @@ function renderDetail(data) {
   $('resume').hidden = active || !data.can_resume; $('continue').hidden = active || !data.can_continue;
   $('resume').disabled = $('continue').disabled = !!job.active;
   $('stop').hidden = !active; $('stop').disabled = !!job.stopping; $('download').hidden = false;
-  const board = record.issue_outcomes || {issues: []};
+  renderOutcomes(data);
+  $('summary-section').hidden = !record.summary; $('summary-text').replaceChildren(renderAnswer(record.summary || '', t));
+  renderJourney(record, open);
+}
+function setDiscussionView(view) {
+  discussionView = view;
+  $('results-view').hidden = view !== 'results'; $('journey-view').hidden = view !== 'journey';
+  $('show-results').setAttribute('aria-pressed', String(view === 'results'));
+  $('show-journey').setAttribute('aria-pressed', String(view === 'journey'));
+}
+function renderOutcomes(data) {
+  const record = data.record, issues = record.issue_outcomes?.issues || [];
+  const groups = AgoraDiscussion.issueGroups(issues);
+  const available = issues.length > 0, complete = record.status === 'completed';
+  $('outcome-title').textContent = t(available ? groups.open.length ? 'Questions remain open' : 'Common ground has emerged' : complete ? 'The issue assessment is unavailable' : 'The conclusions are still taking shape');
+  $('outcome-intro').textContent = t(available ? groups.open.length ? 'Read the open questions, compare the cited positions, and decide what needs another round.' : 'The reported issues are agreed. Review their evidence before relying on the conclusions.' : complete ? 'Read the saved answers or full synthesis; missing outcomes do not imply agreement.' : 'Follow the saved answers while the discussion runs. Issue outcomes appear after synthesis.');
+  if (!available && !complete && !(state.job.active && state.job.run_id === data.id)) {
+    $('outcome-title').textContent = t('The discussion is paused');
+    $('outcome-intro').textContent = t('Saved answers remain available. Resume the unfinished discussion to reach the synthesis.');
+  }
   $('outcome-counts').replaceChildren();
   for (const [status, label] of Object.entries(names)) {
-    const card = node('div', undefined, 'count'); card.append(node('strong', board.issues.filter(i => i.status === status).length), node('span', t(label))); $('outcome-counts').append(card);
+    const count = issues.filter(issue => issue.status === status).length;
+    if (count) $('outcome-counts').append(node('span', `${t(label)} ${count}`, `badge ${status}`));
   }
-  $('issues').replaceChildren();
-  if (!board.issues.length) $('issues').append(node('p', record.summary ? t('No assessable issue outcomes were reported. This does not imply agreement.') : t('Issue outcomes will appear after the summary. Saved answers are available below.'), 'empty'));
-  for (const issue of board.issues) {
-    const card = node('article', undefined, `issue ${issue.status}`), title = node('div', undefined, 'title-row');
-    title.append(node('h3', issue.topic || t('Unassessed issue')), node('span', t(names[issue.status] || issue.status), 'badge'));
-    card.append(title, node('p', issue.reason), node('p', t('Next step: {step}', {step: issue.next_step})));
-    const quotes = node('details'); quotes.id = `issue-${issue.id}`; quotes.open = open.has(quotes.id);
-    quotes.append(node('summary', t('Cited positions · {status}', {status: t(issue.citation_status.replaceAll('_', ' '))})));
-    for (const position of issue.positions) quotes.append(node('p', `${position.provider || t('Unknown')}: ${position.position || t('Unavailable')}`, 'tiny'), node('blockquote', position.quote || t('No valid quote.')));
-    card.append(quotes);
-    if (issue.status !== 'agreed' && data.can_continue && !active) {
-      const actions = node('div', undefined, 'toolbar');
-      for (const evidence of [false, true]) {
-        const button = node('button', t(evidence ? 'Add evidence' : 'Revisit this issue'));
-        button.disabled = !!job.active;
-        button.onclick = () => {
-          edit('continue', record, data.id);
-          $('note').value = [issue.topic, issue.reason, issue.next_step].filter(Boolean).join('\n');
-          if (evidence) { $('sources').closest('details').open = true; $('sources').focus(); }
-          else $('note').focus();
-        };
-        actions.append(button);
-      }
-      card.append(actions);
+  $('issue-overview').replaceChildren();
+  if (!available) {
+    $('issue-inspector').hidden = true;
+    const button = node('button', t('How we got here'));
+    button.onclick = () => setDiscussionView('journey'); $('issue-overview').append(button); return;
+  }
+  if (!issues.some(issue => issue.id === focusedIssue)) focusedIssue = (groups.open[0] || groups.agreed[0]).id;
+  for (const [key, label] of [['agreed', 'Common ground'], ['open', 'Still open']]) {
+    const column = node('section', undefined, `issue-list ${key}`);
+    column.append(node('h3', t(label)));
+    if (!groups[key].length) column.append(node('p', t(key === 'agreed' ? 'No common ground reported yet.' : 'No open issues reported.'), 'hint'));
+    for (const issue of groups[key]) {
+      const button = node('button', undefined, 'issue-choice'); button.setAttribute('aria-pressed', String(focusedIssue === issue.id));
+      button.append(node('span', t(names[issue.status] || 'Unverified'), 'issue-kind'), node('strong', issue.topic || t('Unassessed issue')), node('span', issue.reason, 'issue-reason'));
+      button.onclick = () => { focusedIssue = issue.id; renderOutcomes(data); $('issue-inspector').focus({preventScroll: true}); $('issue-inspector').scrollIntoView({behavior: 'smooth', block: 'nearest'}); };
+      column.append(button);
     }
-    $('issues').append(card);
+    $('issue-overview').append(column);
   }
-  $('summary-section').hidden = !record.summary; $('summary-text').replaceChildren(renderAnswer(record.summary || '', t));
-  $('turns').replaceChildren();
-  record.turns.forEach((turn, i) => {
-    const item = node('details', undefined, 'answer'); item.id = `turn-${i}`; item.open = open.has(item.id);
-    const meta = turn.metadata || {};
-    item.append(node('summary', `${String(i + 1).padStart(2, '0')} · ${turn.provider} · ${t(turn.phase)}${turn.round ? t(' / round {round}', {round: turn.round}) : ''}`),
-      node('p', t('Requested: {requested} · Reported: {reported}', {requested: meta.requested_model || t('default / not recorded'), reported: (meta.models || []).join(', ') || t('unavailable')}), 'hint'), renderAnswer(turn.text, t));
-    $('turns').append(item);
-  });
+  renderIssue(data, issues.find(issue => issue.id === focusedIssue));
 }
+function renderIssue(data, issue) {
+  $('issue-inspector').hidden = !issue; $('issues').replaceChildren();
+  if (!issue) return;
+  const record = data.record, title = node('h2', issue.topic || t('Unassessed issue')); title.id = 'inspector-title';
+  $('issues').append(node('div', t('Positions cited by the summarizer'), 'eyebrow'), title,
+    node('span', t(names[issue.status] || 'Unverified'), 'badge'), node('p', issue.reason));
+  const positions = node('div', undefined, 'position-grid');
+  for (const provider of ['codex', 'claude']) {
+    const position = issue.positions.find(position => position.provider === provider);
+    const card = node('article', undefined, `position ${provider}`);
+    card.append(node('h3', providerName(provider)));
+    if (position) {
+      card.append(node('p', position.position || t('Unavailable')), node('blockquote', position.quote || t('No valid quote.')),
+        node('p', t(position.status === 'quote_found' ? 'Quote found in the cited answer' : 'Citation could not be confirmed'), 'hint'));
+      const index = record.turns.findIndex((_, index) => `T${String(index + 1).padStart(3, '0')}` === position.turn_id);
+      if (index >= 0) {
+        const link = node('button', `${t('Open cited answer')} · ${position.turn_id}`);
+        link.onclick = () => {
+          setDiscussionView('journey'); const target = $(`turn-${index}`);
+          if (target) { target.open = true; target.scrollIntoView({behavior: 'smooth', block: 'start'}); target.querySelector('summary').focus(); }
+        };
+        card.append(link);
+      }
+    } else card.append(node('p', t('No attributable position was recorded.'), 'hint'));
+    positions.append(card);
+  }
+  $('issues').append(positions);
+  const next = node('div', undefined, 'next-step'); next.append(node('strong', t('Next useful step')), node('p', issue.next_step || t('Unavailable'))); $('issues').append(next);
+  if (issue.status !== 'agreed' && data.can_continue) {
+    const actions = node('div', undefined, 'toolbar');
+    for (const evidence of [false, true]) {
+      const button = node('button', t(evidence ? 'Add evidence' : 'Revisit this issue'), evidence ? '' : 'primary'); button.disabled = !!state.job.active;
+      button.onclick = () => {
+        edit('continue', record, data.id); $('note').value = [issue.topic, issue.reason, issue.next_step].filter(Boolean).join('\n');
+        if (evidence) { $('sources').closest('details').open = true; $('sources').focus(); } else $('note').focus();
+      };
+      actions.append(button);
+    }
+    $('issues').append(actions);
+  }
+}
+function renderJourney(record, open) {
+  $('turns').replaceChildren();
+  const groups = AgoraDiscussion.rounds(record.turns);
+  if (!groups.length) $('turns').append(node('p', t('No answers saved yet.'), 'empty'));
+  for (const group of groups) {
+    const section = node('section', undefined, 'review-round');
+    section.append(node('h3', group.round ? t('Review round {round}', {round: group.round}) : t('Independent views')),
+      node('p', t(group.round ? 'These answers review earlier turns. Responses in the same round do not see each other.' : 'Each participant starts with the question and supplied context.'), 'hint'));
+    const pair = node('div', undefined, 'position-grid');
+    for (const provider of ['codex', 'claude']) {
+      const column = node('article', undefined, `position ${provider}`); column.append(node('h4', providerName(provider)));
+      const turns = group.turns.filter(turn => turn.provider === provider);
+      if (!turns.length) column.append(node('p', t('Waiting for a saved answer'), 'hint'));
+      for (const turn of turns) {
+        const actual = turn.metadata?.actual_provider;
+        if (actual && actual !== provider) column.append(node('p', providerName(actual), 'hint'));
+        column.append(node('div', `${t('Answer excerpt')} · ${turn.id}`, 'section-label'), node('p', AgoraDiscussion.excerpt(turn.text), 'answer-excerpt'));
+        const item = node('details', undefined, 'answer'); item.id = `turn-${turn.index}`; item.open = open.has(item.id);
+        const meta = turn.metadata || {};
+        item.append(node('summary', t('Read full answer')), renderAnswer(turn.text, t),
+          node('p', t('Requested: {requested} · Reported: {reported}', {requested: meta.requested_model || t('default / not recorded'), reported: (meta.models || []).join(', ') || t('unavailable')}), 'hint'));
+        column.append(item);
+      }
+      pair.append(column);
+    }
+    section.append(pair); $('turns').append(section);
+  }
+}
+
 async function refreshDetail(id) {
   try {
     const data = await api(`/api/runs/${encodeURIComponent(id)}`);
@@ -334,6 +482,8 @@ async function poll() {
   } catch (e) { $('connection').hidden = false; }
   finally { polling = false; }
 }
+$('show-results').onclick = () => setDiscussionView('results');
+$('show-journey').onclick = () => setDiscussionView('journey');
 $('new').onclick = () => edit();
 $('back-setup').onclick = () => { selected = null; $('editor').hidden = false; $('discussion').hidden = true; renderHistory(); };
 $('view-active').onclick = () => act(() => openRun(state.job.run_id));

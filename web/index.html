@@ -7,6 +7,7 @@
   <title>Agora — A place to think it through</title>
   <link rel="stylesheet" href="style.css">
   <script src="answer.js" defer></script>
+  <script src="discussion.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -69,16 +70,35 @@
       </section>
     </section>
     <section id="discussion" hidden>
-      <div class="eyebrow">DISCUSSION RECORD</div>
+      <div class="eyebrow">TWO VIEWS. ONE QUESTION.</div>
       <div class="title-row"><h1 id="discussion-title"></h1><span id="status" class="badge"></span></div>
+      <details id="full-question" class="question-detail" hidden><summary>Full question</summary><p id="question-text"></p></details>
       <div class="toolbar"><button id="resume" hidden>Resume discussion</button><button id="continue" class="primary" hidden>Continue discussion →</button><button id="stop" hidden>Stop after current answer</button><button id="back-setup" hidden>Back to setup</button><button id="download" hidden>Download report</button></div>
-      <div class="progress-card"><div class="title-row"><strong id="progress-label">Preparing discussion</strong><span id="progress-count"></span></div><progress id="progress" value="0" max="5"></progress><p id="run-models" class="hint"></p><p id="run-error" class="error" hidden></p></div>
-      <div class="section-label">WHERE THINGS STAND</div>
-      <p class="hint">These are model judgments. Agreement and matching quotes do not establish truth.</p>
-      <div id="outcome-counts" class="outcome-counts"></div>
-      <div id="issues"></div>
-      <details id="summary-section" class="answer" hidden><summary>Final summary</summary><div id="summary-text"></div></details>
-      <div class="section-label timeline-label">THE DISCUSSION</div><div id="turns"></div>
+      <div class="progress-card">
+        <div class="title-row"><strong id="progress-label" aria-live="polite">Preparing discussion</strong><span id="progress-count"></span></div>
+        <ol id="debate-stages" class="debate-stages" aria-label="Discussion stages"></ol>
+        <progress id="progress" value="0" max="5"></progress>
+        <details class="run-details"><summary>Models & execution details</summary><p id="run-models" class="hint"></p></details>
+        <p id="run-error" class="error" hidden></p>
+      </div>
+      <nav class="view-switch" aria-label="Discussion views">
+        <button id="show-results" aria-pressed="true">Where we stand</button>
+        <button id="show-journey" aria-pressed="false">How we got here</button>
+      </nav>
+      <section id="results-view">
+        <header class="verdict"><div class="eyebrow">WHERE WE STAND</div><h2 id="outcome-title"></h2><p id="outcome-intro"></p></header>
+        <p class="hint">These are model judgments. Agreement and matching quotes do not establish truth.</p>
+        <div id="issue-overview" class="issue-overview"></div>
+        <div id="outcome-counts" class="outcome-counts"></div>
+        <section id="issue-inspector" class="issue-inspector" hidden aria-labelledby="inspector-title" tabindex="-1">
+          <div id="issues"></div>
+        </section>
+        <details id="summary-section" class="answer" hidden><summary>Read the full synthesis</summary><div id="summary-text"></div></details>
+      </section>
+      <section id="journey-view" hidden>
+        <header class="verdict"><div class="eyebrow">HOW WE GOT HERE</div><h2>Follow the reasoning</h2><p>Read the independent views, then compare each round of review. These are saved answers, not inferred changes of mind.</p></header>
+        <div id="turns"></div>
+      </section>
     </section>
     <div class="page-footer">Think together. Keep the evidence separate.</div>
   </main>

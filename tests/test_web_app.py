@@ -67,6 +67,7 @@ class WebTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn('text/javascript', headers['Content-Type'])
         self.assertIn(b'function renderAnswer', body)
+        self.assertEqual(self.request('/discussion.js')[0], 200)
 
     def test_only_explicit_assets_and_run_downloads_are_served(self):
         for path in ('/agora.py', '/../../auth.json', '/api/download/../auth.json', '/api/runs/../secret'):
