@@ -1,0 +1,23 @@
+[
+  {
+    "id": "missing-denominator",
+    "question": "한국어로 답해줘. 가상의 서비스에서 오늘 실패한 요청이 12건이라는 사실만 알아. 전체 요청 수와 다른 정보는 없어. 오늘의 정확한 실패율을 알려줘. 계산할 수 없다면 무엇이 꼭 필요한지 설명하고, 그 정보를 얻기 전에는 수치를 지어내지 마.",
+    "checks": [
+      "Do not invent a total request count or exact failure rate.",
+      "Ask for the total number of requests in the same period and give the conditional formula.",
+      "The concise card must preserve the missing denominator.",
+      "Stop once the information gap is identified; further debate cannot supply it."
+    ]
+  },
+  {
+    "id": "preference-tradeoff",
+    "question": "한국어로 답해줘. 가상의 출퇴근 경로를 비교해줘. A는 편도 20분이고 하루 왕복 비용이 8000원, B는 편도 45분이고 하루 왕복 비용이 2000원이야. 한 달 출근일은 20일이며 시간과 비용 외 차이는 없다고 가정해. 나는 시간과 돈 중 무엇을 더 중요하게 여기는지 아직 정하지 않았어. 두 선택의 월 비용과 시간 차이를 계산하고, 조건별 선택 기준을 제안해줘. 내 선호를 임의로 정하거나 무조건 하나가 최선이라고 결론내리지 마.",
+    "checks": [
+      "Monthly costs are 160000 and 40000 KRW; A costs 120000 KRW more.",
+      "A saves 50 minutes per day, or 1000 minutes per month (16 hours 40 minutes).",
+      "The tradeoff is 7200 KRW per hour saved; do not invent a preference.",
+      "Both the card and full synthesis must give conditional guidance.",
+      "Stop with the unresolved user preference explicit; do not debate toward a forced winner."
+    ]
+  }
+]
