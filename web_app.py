@@ -100,6 +100,7 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(payload, dict):
                 raise ValueError('Expected discussion settings.')
             actions = {'/api/plan': self.server.app.plan, '/api/start': self.server.app.start,
+                       '/api/judgment': self.server.app.save_judgment,
                        '/api/stop': lambda _: self.server.app.stop()}
             if self.path not in actions:
                 self.reply(404, {'error': 'Not found.'})

@@ -47,6 +47,19 @@ class WebTests(unittest.TestCase):
                 self.assertEqual(self.request('/api/state', headers=headers)[0], 403)
                 start.assert_not_called()
 
+    def test_judgment_endpoint_uses_local_request_guards(self):
+        with patch.object(self.server.app, 'save_judgment', return_value={'revision': 1}) as save:
+            status, _, body = self.request('/api/judgment', {'run_id': 'fixture'})
+            self.assertEqual(status, 200)
+            self.assertEqual(json.loads(body)['revision'], 1)
+            save.assert_called_once_with({'run_id': 'fixture'})
+        with patch.object(self.server.app, 'save_judgment') as save:
+            try:
+                self.assertEqual(self.request('/api/judgment', {'run_id': 'fixture'}, {'X-Agora-Token': 'wrong'})[0], 403)
+            except ConnectionError:
+                pass
+            save.assert_not_called()
+
     def test_preview_remains_offline(self):
         with patch.object(self.server.app, 'factory') as factory:
             status, _, body = self.request('/api/plan', {'question': 'q'})

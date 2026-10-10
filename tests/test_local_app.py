@@ -62,6 +62,40 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.history()[0]['outcomes'], [item['status'] for item in detail['record']['issue_outcomes']['issues']])
         self.assertTrue((self.root / run_id / 'report.md').is_file())
 
+    def test_judgment_is_private_and_revision_checked(self):
+        run_id = self.finish({'question': 'Decision fixture'})
+        transcript = (self.root / run_id / 'transcript.json').read_bytes()
+        data = {'run_id': run_id, 'revision': 0, 'decision': 'Try a pilot',
+                'reason': 'Private reasoning', 'open_questions': 'Unknown timing'}
+        with run_state.locked(self.root / run_id):
+            saved = self.app.save_judgment(data)
+        self.assertEqual(saved['revision'], 1)
+        self.assertEqual(self.app.detail(run_id)['judgment']['decision'], 'Try a pilot')
+        with self.assertRaisesRegex(ValueError, 'another window'):
+            self.app.save_judgment(data)
+        self.assertEqual((self.root / run_id / 'transcript.json').read_bytes(), transcript)
+        child = self.finish({'mode': 'continue', 'parent': run_id})
+        self.assertEqual(self.app.detail(child)['judgment']['revision'], 0)
+        for providers in self.providers:
+            for provider in providers.values():
+                self.assertNotIn('Private reasoning', json.dumps(provider.calls))
+
+    def test_invalid_judgment_never_replaces_saved_notes(self):
+        run_id = self.finish({'question': 'q'})
+        data = {'run_id': run_id, 'revision': 0, 'decision': 'x' * 4001, 'reason': '', 'open_questions': ''}
+        with self.assertRaises(ValueError):
+            self.app.save_judgment(data)
+        self.assertFalse((self.root / run_id / 'judgment.json').exists())
+        data.update(run_id='../escape', decision='x')
+        with self.assertRaises(ValueError):
+            self.app.save_judgment(data)
+        (self.root / run_id / 'judgment.json').write_text('broken', encoding='utf-8')
+        detail = self.app.detail(run_id)
+        self.assertIsNone(detail['judgment'])
+        self.assertEqual(detail['record']['status'], 'completed')
+        with self.assertRaises(ValueError):
+            self.app.save_judgment(dict(data, run_id=run_id))
+
     def test_stop_saves_current_answer_and_resume_only_calls_missing_turns(self):
         entered, release = threading.Event(), threading.Event()
         factory = self.factory

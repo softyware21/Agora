@@ -11,6 +11,7 @@ import uuid
 import agora
 import continue_debate
 import models
+import judgment
 import run_state
 import sources
 
@@ -96,9 +97,18 @@ class App:
     def detail(self, run_id):
         record = self.record(run_id)
         mixed = all(t.get('metadata', {}).get('actual_provider', t['provider']) == t['provider'] for t in record['turns'])
-        return {'id': run_id, 'record': record,
+        try:
+            note, note_error = judgment.load(self.folder(run_id)), None
+        except (ValueError, OSError):
+            note, note_error = None, 'Decision notes could not be read. Keep the original file.'
+        return {'id': run_id, 'record': record, 'judgment': note, 'judgment_error': note_error,
                 'can_resume': mixed and record['status'] != 'completed' and record['prompt_version'] == agora.prompt_version(),
                 'can_continue': mixed and record['status'] == 'completed' and record['rounds'] < 12}
+
+    def save_judgment(self, payload):
+        run_id = payload.get('run_id')
+        self.record(run_id)
+        return judgment.save(self.folder(run_id), payload)
 
     def plan(self, payload):
         if not isinstance(payload, dict):
