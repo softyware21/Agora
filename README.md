@@ -17,7 +17,9 @@ the claims. Neither a quote match nor agreement between models is proof.
 4. After one to three rounds, the selected provider writes a final summary (Codex by default).
 5. Agora saves a Markdown report and a JSON transcript after each completed turn.
 
-One review round makes five model calls, two make seven, and three make nine.
+Fixed review makes five calls for one round, seven for two, and nine for three.
+The local interface defaults to automatic review: up to three rounds and eleven
+calls, including a synthesis after each round, with early stopping when appropriate.
 Each call starts a new session with explicit context. Answers follow the language
 of the question unless your rules specify otherwise.
 
@@ -62,7 +64,9 @@ python web_app.py
 ```
 
 On Windows, double-click `start-ui.cmd`. The page opens at `http://127.0.0.1:8765`.
-Enter a question, choose models and rounds, review the call count, then start.
+Enter a question and select **Think it through**. Optional settings and an offline
+call preview are under **Customize this discussion**. Results lead with the
+conclusion; expand the issues or open the discussion history for more detail.
 The page shows saved answers, issue outcomes, and controls to stop, resume, or
 continue a completed discussion. Closing the browser leaves the runner active.
 

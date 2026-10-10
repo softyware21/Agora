@@ -18,24 +18,57 @@ in those instructions uses port 8765; use the printed address for other ports.
 
 ## Start a discussion
 
-1. Enter a question. Optionally choose a purpose: open discussion, decision, claim
-   examination, or comparison. Purpose presets append instructions to the existing
-   rules when starting a new discussion; the saved rules preserve them for resume
-   and follow-up. The preview shows the purpose and makes no extra model calls.
-   Default models and one review round are ready to use.
-   Open **Models & rounds** to choose named participant models, review rounds,
-   or a summary provider. The summary follows that participant unless you choose
-   another model under **Advanced model selection**.
-2. Open **Rules, sources & timing** for discussion rules, public HTTPS sources,
-   and execution limits. Choose **Custom…** in a model menu to enter another ID
-   or alias. The menus are curated suggestions, not a live account catalog; the
-   provider checks account availability when a call is made.
-3. Select **Review setup**. The preview makes no model calls or source downloads.
-   It shows the planned calls for each provider. Remaining subscription allowance
-   is shown as unavailable; call counts do not estimate it.
-4. Select **Start discussion**. One discussion can run at a time in this server.
+Enter a question and select **Think it through**. No setup preview is required.
+The default uses the CLI default models, automatic review up to three rounds,
+and a ten-minute generation deadline. The visible budget is at most eleven calls,
+including a synthesis after each round. Calls use the existing subscriptions;
+remaining allowance is unavailable and call counts do not estimate token usage.
 
-Changing a setting clears the preview so the next start uses reviewed settings.
+**Customize this discussion** contains optional purpose presets, model menus,
+review limits, rules, sources, and timing. **Fixed rounds** retains the original
+single-synthesis workflow. **Preview settings** validates and counts calls without
+model calls or source downloads. Changing settings invalidates that preview.
+Model selections are remembered in browser storage after a successful start;
+questions, rules, source URLs, and personal notes are not stored there.
+
+Purpose presets append instructions to the saved rules. New UI discussions also
+ask the models to adapt the review to the question and lead the synthesis with a
+usable conclusion, reasons, uncertainty, and conditions that could change it.
+These instructions do not add a separate classification call. Models may ask for
+missing information in the result; there is no preflight interview.
+
+Model menus are curated suggestions, not a live account catalog. A summary uses
+its participant's model unless an override is selected. Account availability is
+checked by the provider when called. One job can run at a time in this server.
+
+## Automatic review
+
+Automatic review runs one round and a synthesis, then checks the reported issues.
+It stops when all reported issues are agreed, any needs information, the assessment
+is missing or has invalid citations, the reported topics and position wording
+repeat exactly after normalization, or the round/time limit is reached. This is
+not semantic detection of stagnation or proof that all possible issues are resolved.
+The summarizer may miss an issue or misinterpret agreement despite valid quotes.
+
+A continuing round uses the existing continuation runner and a new directory.
+Earlier transcripts and summaries stay unchanged. The sidebar shows the latest
+record in an automatic chain; **Models & execution details → Earlier review** opens
+its predecessor. Private notes stay with the record on which they were written.
+The final transcript contains inherited participant answers and the latest summary;
+intermediate summaries are preserved in earlier records and parent snapshots.
+
+Each extra round costs at most three calls, including its synthesis. Fixed runs
+still cost five, seven, or nine calls for one, two, or three rounds. Automatic runs
+cost at most five, eight, or eleven. Follow-ups omit the two initial calls. The
+existing twelve-round cumulative limit still applies.
+
+The generation time budget is shared across automatic rounds in one execution.
+A manual resume grants the displayed time budget again but preserves the original
+round limit from `automatic.json`. Saved calls are not repeated; provider failures
+are not retried automatically. If stopped during the final synthesis, the record
+may be complete and require a new follow-up instead of resume. The runner stops
+between calls; source retrieval and login checks may add overhead.
+
 Choose Korean or English with the sidebar language selector. The first visit uses
 the browser language; later visits use the saved choice when browser storage is
 available. Switching languages preserves the form, preview, and saved answers.
@@ -63,7 +96,7 @@ the same graceful stop and waits for the worker before exiting. Force-closing th
 terminal can lose the answer in progress; completed answers remain on disk.
 
 After a usage limit resets, open a stopped discussion, select **Resume discussion**,
-review the remaining calls, and resume. Requested models and previous settings
+resume directly or open the optional preview to review remaining calls. Requested models and previous settings
 stay fixed. A server restart may leave an unfinished record labelled **Unfinished**;
 it can be resumed when the transcript is compatible and no other writer owns it.
 
@@ -74,12 +107,12 @@ an API account or automatically retries a generation.
 
 ## Results and follow-up rounds
 
-**Where we stand** starts with the substance of reported common ground and open
-issues. Counts are secondary. Select an issue to compare the two positions cited
-by the summarizer, see whether each quote was found, and open its saved answer.
+**Where we stand** opens with the saved synthesis and remaining questions. The
+automatic stop reason is shown separately. **Explore the issues and evidence**
+contains the common ground, open issues, citation comparison, and evidence checks.
+Select an issue to compare the cited positions and open the original answers.
 An unverified issue remains open even if the model called it agreed. Missing
-issue outcomes are explicitly unavailable, never interpreted as consensus.
-The full synthesis remains available below the issue inspector.
+outcomes never imply consensus. **Keep a personal note** is optional and collapsed.
 
 **How we got here** groups independent answers and each review round, with both
 participants shown together when space permits. Excerpts come from saved text;

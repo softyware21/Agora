@@ -24,6 +24,9 @@
 - Participant and summary model selection, saved resume settings, and offline call previews.
 - Local browser interface for setup, saved progress, stop/resume, issue outcomes, and follow-up rounds.
 
+- Question-first setup, remembered model choices, and conclusion-first results.
+- Bounded automatic review with per-round synthesis and explicit stop reasons.
+
 ## Next: reproducibility
 
 - Select an open-source license before accepting external contributions.
