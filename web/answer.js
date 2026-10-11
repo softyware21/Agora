@@ -38,7 +38,7 @@ function renderAnswer(text, translate = value => value, doc = document) {
       const closed = i < lines.length;
       if (closed) i++;
       const pre = el('pre'); pre.append(el('code', content.join('\n')));
-      const known = ['agora-issues', 'agora-attributions', 'agora-calculations', 'agora-sources', 'agora-source-reviews', 'agora-result'].includes(label);
+      const known = ['agora-issues', 'agora-attributions', 'agora-calculations', 'agora-sources', 'agora-source-reviews', 'agora-result', 'agora-position'].includes(label);
       let parsed = false;
       if (known && closed) {
         try { const value = JSON.parse(content.join('\n')); parsed = value !== null && typeof value === 'object'; } catch (_) { /* Keep malformed data visible. */ }

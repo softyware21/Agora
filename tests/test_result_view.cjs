@@ -36,3 +36,15 @@ context.renderConclusion(summary({...card,conclusion:'<img src=x onerror=alert(1
 assert.equal(root.children[0].textContent, '<img src=x onerror=alert(1)>');
 assert.equal(all(root).filter(n => n.tag === 'img').length, 0);
 console.log('Reported states, visible opposing quotes, and full-source fallback passed.');
+
+const direct = {status:'different_categories', positions:[
+  {provider:'codex',turn_id:'T003',status:'declared',disposition:'ready',conclusion:'Proceed.',conditions:['Capacity is sufficient.']},
+  {provider:'claude',turn_id:'T004',status:'declared',disposition:'blocked',conclusion:'Do not proceed.',conditions:['Capacity is insufficient.']}
+]};
+context.renderConclusion(summary(card), [], direct);
+const panel = root.children.find(n => n.className === 'participant-positions');
+assert.ok(panel && panel.tag !== 'details');
+assert.ok(all(panel).some(n => n.textContent === 'Do not proceed.'));
+assert.ok(all(panel).some(n => n.textContent === 'Capacity is insufficient.'));
+context.renderConclusion('Legacy answer.', [], direct);
+assert.ok(root.children.some(n => n.className === 'participant-positions'));

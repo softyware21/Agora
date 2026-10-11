@@ -1,4 +1,10 @@
 const korean = {
+  "The summary reports agreement, but the participants declared different decision categories. Review their positions below.": "요약은 합의를 보고했지만 참여자들이 직접 기록한 판단 유형은 다릅니다. 아래 각자의 결론을 확인하세요.",
+  "Participants' own conclusions": "참여자가 직접 기록한 결론",
+  "These declarations come from the latest participant answers, not the summary. Matching categories do not establish agreement or truth.": "요약이 아닌 각 참여자의 최신 답변에서 가져왔습니다. 판단 유형이 같아도 합의나 사실 검증을 뜻하지 않습니다.",
+  "No valid declaration in the latest answer": "최신 답변에 유효한 직접 기록이 없음",
+  "Blocked by a requirement": "필수 조건 때문에 진행 불가",
+  "Position undetermined": "판단 미정",
   "Reported agreement; compare the cited positions. Agreement has not been independently checked.": "요약이 합의를 보고했습니다. 아래 양쪽 입장을 비교하세요. 합의 여부를 독립적으로 확인한 것은 아닙니다.",
   "Review paused for remaining facts or choices. See the conditions below.": "남은 사실 확인이나 선택 사항이 있어 검토를 멈췄습니다. 아래 적용 조건을 확인하세요.",
   "Reported answer state": "모델이 보고한 답변 상태",
@@ -489,16 +495,17 @@ function renderDetail(data) {
     const item = node('li'); item.append(node('strong', issue.topic || t('Unassessed issue')), node('p', issue.next_step || issue.reason || t('Unavailable'))); $('remaining-list').append(item);
   }
   const reason = data.automatic?.reason;
-  const messages = {consensus_unverified: 'Reported agreement; compare the cited positions. Agreement has not been independently checked.', agreement: 'Reported agreement; compare the cited positions. Agreement has not been independently checked.', needs_information: 'Review paused for remaining facts or choices. See the conditions below.', assessment_unavailable: 'The issue assessment could not be confirmed. Automatic review stopped.', repeated_positions: 'The reported positions repeated without a wording change. Review stopped.', round_limit: 'The review limit was reached. Remaining disagreements are included below.', deadline: 'The time limit was reached. Saved answers remain available.', user_stop: 'Automatic review was stopped at your request.'};
+  const messages = {participant_positions_differ: 'The summary reports agreement, but the participants declared different decision categories. Review their positions below.', consensus_unverified: 'Reported agreement; compare the cited positions. Agreement has not been independently checked.', agreement: 'Reported agreement; compare the cited positions. Agreement has not been independently checked.', needs_information: 'Review paused for remaining facts or choices. See the conditions below.', assessment_unavailable: 'The issue assessment could not be confirmed. Automatic review stopped.', repeated_positions: 'The reported positions repeated without a wording change. Review stopped.', round_limit: 'The review limit was reached. Remaining disagreements are included below.', deadline: 'The time limit was reached. Saved answers remain available.', user_stop: 'Automatic review was stopped at your request.'};
   $('automatic-reason').hidden = active || !messages[reason];
   $('automatic-reason').textContent = t(messages[reason] || '');
   renderJudgment(data);
-  $('summary-section').hidden = !record.summary; renderConclusion(record.summary || '', record.issue_outcomes?.issues || []);
+  $('summary-section').hidden = !record.summary; renderConclusion(record.summary || '', record.issue_outcomes?.issues || [], record.participant_positions);
   renderJourney(record, open);
 }
-function renderConclusion(summary, issues = []) {
+function renderConclusion(summary, issues = [], participantPositions) {
   const card = AgoraDiscussion.resultCard(summary);
   $('summary-text').replaceChildren();
+  const direct = renderParticipantPositions(participantPositions);
   let review;
   const agreements = issues.filter(issue => issue.status === 'agreed');
   if (agreements.length) {
@@ -510,6 +517,7 @@ function renderConclusion(summary, issues = []) {
     }
   }
   if (!card) {
+    if (direct) $('summary-text').append(direct);
     if (review) $('summary-text').append(review);
     if (/agora-result/.test(summary)) $('summary-text').append(node('p', t('The concise result could not be read. The full synthesis is shown instead.'), 'notice'));
     $('summary-text').append(renderAnswer(summary, t));
@@ -528,10 +536,30 @@ function renderConclusion(summary, issues = []) {
     for (const item of card[key]) list.append(node('li', item));
     section.append(list); $('summary-text').append(section);
   }
+  if (direct) $('summary-text').append(direct);
   if (review) $('summary-text').append(review);
   const source = node('details', undefined, 'full-synthesis');
   source.append(node('summary', t('Full synthesis and evidence')), renderAnswer(summary, t));
   $('summary-text').append(source);
+}
+function renderParticipantPositions(board) {
+  if (!board?.positions?.some(position => position.status === 'declared')) return null;
+  const section = node('section', undefined, 'participant-positions');
+  section.append(node('h3', t("Participants' own conclusions")), node('p', t('These declarations come from the latest participant answers, not the summary. Matching categories do not establish agreement or truth.'), 'hint'));
+  const labels = {ready:'Ready under stated conditions', blocked:'Blocked by a requirement', conditional:'Conditional answer', user_choice:'Your preference is needed', undetermined:'Position undetermined'};
+  for (const position of board.positions) {
+    const article = node('article');
+    article.append(node('h4', providerName(position.provider)));
+    if (position.status !== 'declared') article.append(node('p', t('No valid declaration in the latest answer')));
+    else {
+      article.append(node('p', t(labels[position.disposition])), node('p', position.conclusion));
+      const conditions = node('ul');
+      for (const condition of position.conditions) conditions.append(node('li', condition));
+      article.append(conditions);
+    }
+    section.append(article);
+  }
+  return section;
 }
 function setDiscussionView(view) {
   discussionView = view;
