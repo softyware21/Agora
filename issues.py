@@ -6,6 +6,36 @@ from sources import normalize
 STATUSES = ('agreed', 'disputed', 'insufficient_information')
 
 
+def participant_positions(turns):
+    """Read each participant's latest declaration, never the summarizer's copy."""
+    latest = {}
+    for index, turn in enumerate(turns):
+        if turn.get('phase') in ('initial', 'review') and turn.get('provider') in ('codex', 'claude'):
+            latest[turn['provider']] = (index, turn)
+    rows = []
+    for provider in ('codex', 'claude'):
+        if provider not in latest:
+            continue
+        index, turn = latest[provider]
+        row = {'provider': provider, 'turn_id': turn_id(index), 'status': 'unavailable'}
+        rows.append(row)
+        entries, status = block(turn['text'], 'agora-position')
+        if status != 'parsed' or len(entries) != 1:
+            continue
+        entry = entries[0]
+        if (not isinstance(entry, dict) or set(entry) != {'disposition', 'conclusion', 'conditions'}
+                or entry['disposition'] not in ('ready', 'blocked', 'conditional', 'user_choice', 'undetermined')
+                or not bounded(entry, 'conclusion', 600)
+                or not isinstance(entry['conditions'], list) or not 1 <= len(entry['conditions']) <= 4
+                or any(not isinstance(value, str) or not 1 <= len(value.strip()) <= 500 for value in entry['conditions'])):
+            continue
+        row.update(status='declared', **entry)
+    status = 'unavailable'
+    if len(rows) == 2 and all(row['status'] == 'declared' for row in rows):
+        status = 'same_category' if rows[0]['disposition'] == rows[1]['disposition'] else 'different_categories'
+    return {'status': status, 'positions': rows}
+
+
 def ledger(turns):
     summaries = [t for t in turns if t['phase'] == 'summary']
     if not summaries:

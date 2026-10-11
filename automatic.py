@@ -4,9 +4,10 @@ import os
 import tempfile
 
 import run_state
+import issues as issue_checks
 
 
-REASONS = ('running', 'agreement', 'consensus_unverified', 'needs_information', 'assessment_unavailable',
+REASONS = ('running', 'agreement', 'consensus_unverified', 'participant_positions_differ', 'needs_information', 'assessment_unavailable',
            'repeated_positions', 'round_limit', 'deadline', 'user_stop')
 
 
@@ -47,6 +48,8 @@ def assess(record, policy):
     if any(i['status'] == 'insufficient_information' for i in issues):
         return 'needs_information', ''
     if all(i['status'] == 'agreed' for i in issues):
+        if issue_checks.participant_positions(record.get('turns', []))['status'] == 'different_categories':
+            return 'participant_positions_differ', ''
         return 'consensus_unverified', ''
     positions = sorted((i['topic'].strip().casefold(), i['status'],
                         sorted(p.get('position', '').strip().casefold() for p in i['positions'])) for i in issues)

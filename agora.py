@@ -274,6 +274,7 @@ def _save(run_dir, record):
     record['source_checks'] = source_evidence.ledger(record['turns'], record.get('sources', []))
     record['attribution_checks'] = attribution.ledger(record['turns'])
     record['issue_outcomes'] = issues.ledger(record['turns'])
+    record['participant_positions'] = issues.participant_positions(record['turns'])
     temporary = run_dir / "transcript.tmp"
     temporary.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     temporary.replace(run_dir / "transcript.json")
