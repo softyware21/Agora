@@ -49,6 +49,20 @@ back to the full synthesis. Existing records and saved prompts are not rewritten
 Recognized JSON data blocks share one disclosure; malformed blocks remain visible.
 Requested language and faithful summarization still depend on the model.
 
+New result cards also request two optional fields together: `answer_state`
+(`complete`, `conditional`, `incomplete`) and `decision_state` (`ready`,
+`user_choice`, `missing_facts`, `conflicting_evidence`, `unresolved_disagreement`).
+They describe the summarizer's assessment, not independently verified readiness.
+Mandatory unknowns and conflicting evidence take precedence over preferences;
+other blockers remain in the conditions. These fields never control automatic
+stopping. Existing cards without either field still render. Partial or invalid
+state fields fall back to the complete synthesis.
+
+Reported agreement includes both cited participant quotes in the main result,
+without a disclosure step. This also applies to old records and fixed-round runs.
+The quotes are still selected by the summarizer; they can omit context. Compare
+them with the preserved answers when the conclusion matters.
+
 Model menus are curated suggestions, not a live account catalog. A summary uses
 its participant's model unless an override is selected. Account availability is
 checked by the provider when called. One job can run at a time in this server.
@@ -56,7 +70,10 @@ checked by the provider when called. One job can run at a time in this server.
 ## Automatic review
 
 Automatic review runs one round and a synthesis, then checks the reported issues.
-It stops when all reported issues are agreed, any needs information, the assessment
+It pauses with `consensus_unverified` when all reported issues are agreed: matching
+citations do not establish semantic agreement. This does not add calls or claim
+that contradictions have been detected. Legacy `agreement` records remain readable
+and receive the same caution in the interface. It also stops when any issue needs information, the assessment
 is missing or has invalid citations, the reported topics and position wording
 repeat exactly after normalization, or the round/time limit is reached. This is
 not semantic detection of stagnation or proof that all possible issues are resolved.

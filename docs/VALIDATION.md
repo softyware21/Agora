@@ -237,6 +237,46 @@ These are reviewer interpretations, not implemented model classifications. Befor
 using new classifications to reduce calls, evaluate false-clearance cases and
 retain the distinction between reported consensus and supported resolution.
 
+## Conservative outcome handling, 2026-10-11
+
+The automatic runner now records `consensus_unverified` when a summary reports
+agreement on every issue. The same offline opposing-quotes probe reaches this
+reason instead of `agreement`. This changes the meaning of the stop, not its call
+count: there is still no semantic contradiction detector. The model's issue label
+remains in the ledger, and old `agreement` policy files remain readable.
+
+The result view displays both cited positions for reported agreement without
+requiring expansion, including on legacy and fixed-round records. It explicitly
+qualifies those claims as unverified. Full answers remain available because the
+summarizer can still choose incomplete or misleading quotations.
+
+New cards request answer completeness separately from decision readiness. The
+parser accepts bounded enum values only, retains old cards without these fields,
+and falls back to the full synthesis for partial or invalid fields. The runner
+does not use these model-generated states to stop, skip objections, or authorize
+an action. Missing-information stop wording now includes remaining facts or choices.
+
+All 135 offline tests passed, including the opposing-quotes regression, legacy
+policy compatibility, unsafe-text rendering, and invalid-state fallback. Five
+saved legacy cards also parsed without inventing new classifications. Browser
+inspection was blocked by the browser tool's security policy; visual layout has
+not been confirmed in this change. Renderer tests are not a screenshot check.
+
+Two bounded live checks used ten calls, with one round per case and no retries.
+The commute comparison produced `complete` plus `user_choice`; the capacity case
+produced `complete` plus `conflicting_evidence`. Both stopped under the existing
+missing-information policy; the display states did not override that policy.
+The capacity card retained D1's 200GB and D2's 100GB, addressing the previous
+presentation gap in this single rerun. Both cards parsed with the new fields.
+
+These are format and case-specific semantic checks, not a reliability estimate.
+The commute card's lead sentence described the 120,000 KRW additional payment
+without explicitly saying "additional" there; its reasons correctly listed total
+costs of 160,000 and 40,000 KRW. Numeric wording still needs fidelity review.
+The false-consensus issue is mitigated through qualified stopping and exposed
+quotes, not solved through independent semantic verification. Keep issue #13 open
+for further classification and contradiction checks.
+
 ## Remaining coverage
 
 - Repeat representative cases and use independent blinded reviewers.
