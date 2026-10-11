@@ -6,7 +6,7 @@ import tempfile
 import run_state
 
 
-REASONS = ('running', 'agreement', 'needs_information', 'assessment_unavailable',
+REASONS = ('running', 'agreement', 'consensus_unverified', 'needs_information', 'assessment_unavailable',
            'repeated_positions', 'round_limit', 'deadline', 'user_stop')
 
 
@@ -47,7 +47,7 @@ def assess(record, policy):
     if any(i['status'] == 'insufficient_information' for i in issues):
         return 'needs_information', ''
     if all(i['status'] == 'agreed' for i in issues):
-        return 'agreement', ''
+        return 'consensus_unverified', ''
     positions = sorted((i['topic'].strip().casefold(), i['status'],
                         sorted(p.get('position', '').strip().casefold() for p in i['positions'])) for i in issues)
     signature = json.dumps(positions, ensure_ascii=False)

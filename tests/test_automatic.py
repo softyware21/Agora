@@ -85,7 +85,7 @@ class AutomaticTests(unittest.TestCase):
         self.assertTrue(parent['summary'])
 
     def test_early_stops_do_not_spend_the_remaining_budget(self):
-        for status, reason in [('agreed', 'agreement'), ('insufficient_information', 'needs_information'),
+        for status, reason in [('agreed', 'consensus_unverified'), ('insufficient_information', 'needs_information'),
                                ('missing', 'assessment_unavailable')]:
             self.status = status
             self.calls.clear()
@@ -150,3 +150,18 @@ class AutomaticTests(unittest.TestCase):
         (self.root / 'automatic.json').write_text('{"target_round":100,"reason":"running"}')
         with self.assertRaises(ValueError):
             automatic.load(self.root)
+
+
+class ConsensusBoundaryTests(unittest.TestCase):
+    def test_opposing_valid_quotes_cannot_produce_confirmed_agreement(self):
+        from evals.probe_outcomes import probe
+        result = probe('agreed')
+        self.assertEqual(result['automatic_reason'], 'consensus_unverified')
+        self.assertEqual(result['positions'], ['Proceed now', 'Do not proceed'])
+        self.assertEqual(probe('agreed', True)['automatic_reason'], 'assessment_unavailable')
+
+    def test_legacy_agreement_policy_remains_readable(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            automatic.save(folder, {'target_round': 2, 'reason': 'agreement', 'previous': ''})
+            self.assertEqual(automatic.load(folder)['reason'], 'agreement')
