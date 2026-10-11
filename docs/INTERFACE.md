@@ -63,6 +63,22 @@ without a disclosure step. This also applies to old records and fixed-round runs
 The quotes are still selected by the summarizer; they can omit context. Compare
 them with the preserved answers when the conclusion matters.
 
+New UI rules ask each participant to append its own `agora-position` declaration
+to initial and review answers. The latest answer from each participant supplies a
+decision category, conclusion, and conditions. The server reads these directly;
+the summarizer cannot supply or replace them. Missing or invalid latest records
+do not fall back to older declarations. The result view shows available direct
+records separately from the summarizer's selected quotes.
+
+If the summary reports agreement on every issue but the participants' declared
+decision categories differ, automatic review stops with `participant_positions_differ`.
+The user can inspect the positions and continue the discussion. This is a bounded
+inconsistency signal, not a semantic contradiction verdict: categories can differ
+even when conditional advice is compatible, and the same category can contain
+opposing recommendations. Matching categories never upgrade consensus to verified.
+No additional model call is introduced, though the declarations add generated
+text. Older records need no migration. This is not an independent semantic judge.
+
 Model menus are curated suggestions, not a live account catalog. A summary uses
 its participant's model unless an override is selected. Account availability is
 checked by the provider when called. One job can run at a time in this server.

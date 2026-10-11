@@ -277,6 +277,35 @@ The false-consensus issue is mitigated through qualified stopping and exposed
 quotes, not solved through independent semantic verification. Keep issue #13 open
 for further classification and contradiction checks.
 
+## Participant declarations, 2026-10-11
+
+Each participant can now record its own disposition, conclusion, and conditions
+in its initial and review answers. The server derives a separate ledger from the
+latest answer per participant; summary content and cached ledgers cannot supply
+these records to the automatic check. Invalid, duplicated, or absent latest
+declarations remain unavailable, without reusing an earlier position.
+
+When all summary issues are labeled agreed but the participants declare different
+decision categories, the runner stops with `participant_positions_differ`. This
+does not decide which model is right or imply that every category difference is
+a contradiction. In particular, matching categories can still contain opposing
+recommendations. Such matches remain unverified. The result view exposes direct
+conclusions and conditions separately from summary-selected quotations.
+
+The 141-test offline suite passed. New cases cover summary substitution, stale
+declarations, duplicate fields and blocks, invalid shapes, a falsified cached ledger,
+opposing recommendations within the same category, and direct-record rendering
+alongside malformed or legacy summaries. No additional assessment call is added.
+Visual browser validation remains outstanding after the earlier tool-policy block.
+
+One live capacity-conflict case completed in five calls using reported models
+`gpt-6.1-sol` and `claude-opus-5-5`. Both latest participant declarations were valid
+and reported `blocked`; both preserved the 200GB/100GB conflict in their own text.
+The final card reported a complete answer with conflicting evidence, retained the
+figures, and the runner stopped for missing information. This checks declaration
+generation and persistence, not the frequency of false consensus. The differing-
+category guard was exercised by offline counterexamples, not by this live case.
+
 ## Remaining coverage
 
 - Repeat representative cases and use independent blinded reviewers.
