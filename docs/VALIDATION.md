@@ -306,6 +306,17 @@ figures, and the runner stopped for missing information. This checks declaration
 generation and persistence, not the frequency of false consensus. The differing-
 category guard was exercised by offline counterexamples, not by this live case.
 
+## Summary fidelity audit, 2026-10-11
+
+A bounded two-call experiment checked four faithful/distorted synthetic pairs,
+including opposing choices within the same participant category. Both models
+classified all eight cases correctly on semantic review. Claude's fenced JSON
+failed the initial plain-JSON parser; a narrowly scoped parser change and offline
+replay accepted it without another call. The 145-test offline suite passed.
+See [the experiment and limitations](SUMMARY_FIDELITY.md). These short paired
+examples do not justify adding an always-on audit; normal discussion behavior
+and call budgets remain unchanged. Issue #13 remains open.
+
 ## Remaining coverage
 
 - Repeat representative cases and use independent blinded reviewers.
