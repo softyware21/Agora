@@ -3,7 +3,7 @@ const AgoraDiscussion = (() => {
     const text = String(question || '').replace(/\s+/g, ' ').trim();
     return text.length > limit ? text.slice(0, limit).trimEnd() + '…' : text;
   }
-  const resultInstruction = '\nIn the summary only, append exactly one fenced agora-result JSON object with version: 1, conclusion: a plain-text string (1-600 characters), conditions: 1-4 plain-text strings, reasons: 1-3 plain-text strings, and next_steps: 0-3 plain-text strings. Each list item must be 1-500 characters. Make each item one short sentence. This is a concise presentation of the same conclusion, not a new decision. Keep material assumptions, unresolved disagreements, uncertainty, and constraints that change the recommendation in conditions. Do not omit them just to be brief. Keep turn IDs, speaker attribution, and discussion mechanics in the full synthesis, not these fields. Use the language explicitly requested by the user, otherwise the language of the question, for every user-facing field and the full synthesis; do not switch languages when summarizing. Still include the full synthesis and the other required evidence blocks. Do not claim agreement is factual verification.';
+  const resultInstruction = '\nIn the summary only, append exactly one fenced agora-result JSON object with version: 1, conclusion: a plain-text string (1-600 characters), conditions: 1-4 plain-text strings, reasons: 1-3 plain-text strings, and next_steps: 0-3 plain-text strings. Each list item must be 1-500 characters. Make each item one short sentence. This is a concise presentation of the same conclusion, not a new decision. Keep material assumptions, unresolved disagreements, uncertainty, and constraints that change the recommendation in conditions. Do not omit them just to be brief. Keep turn IDs, speaker attribution, and discussion mechanics in the full synthesis, not these fields. Use the language explicitly requested by the user, otherwise the language of the question, for every user-facing field and the full synthesis; do not switch languages when summarizing. Also include answer_state (complete, conditional, or incomplete) and decision_state (ready, user_choice, missing_facts, conflicting_evidence, or unresolved_disagreement). These are your reported assessments, not verification or authorization. A complete conditional explanation may still have a blocked decision. Mandatory unknowns and conflicting evidence take precedence over preferences; retain all other blockers in conditions. Include the specific conflicting values or claims in conditions when evidence conflicts. Still include the full synthesis and the other required evidence blocks. Do not claim agreement is factual verification.';
   function resultCard(text) {
     const blocks = [...String(text || '').matchAll(/^```agora-result[ \t]*\r?\n([\s\S]*?)^```[ \t]*\r?$/gm)];
     if (blocks.length !== 1) return null;
@@ -11,9 +11,14 @@ const AgoraDiscussion = (() => {
       const value = JSON.parse(blocks[0][1]);
       const line = (item, limit) => typeof item === 'string' && item.trim().length > 0 && item.length <= limit;
       const list = (items, min, max) => Array.isArray(items) && items.length >= min && items.length <= max && items.every(item => line(item, 500));
-      if (!value || Object.keys(value).some(key => !['version', 'conclusion', 'conditions', 'reasons', 'next_steps'].includes(key)) || value.version !== 1 || !line(value.conclusion, 600) || !list(value.conditions, 1, 4)
+      if (!value || Object.keys(value).some(key => !['version', 'conclusion', 'conditions', 'reasons', 'next_steps', 'answer_state', 'decision_state'].includes(key)) || value.version !== 1 || !line(value.conclusion, 600) || !list(value.conditions, 1, 4)
           || !list(value.reasons, 1, 3) || !list(value.next_steps, 0, 3)) return null;
-      return {conclusion: value.conclusion, conditions: value.conditions, reasons: value.reasons, next_steps: value.next_steps};
+      const states = {};
+      if ('answer_state' in value || 'decision_state' in value) {
+        if (!['complete', 'conditional', 'incomplete'].includes(value.answer_state) || !['ready', 'user_choice', 'missing_facts', 'conflicting_evidence', 'unresolved_disagreement'].includes(value.decision_state)) return null;
+        states.answer_state = value.answer_state; states.decision_state = value.decision_state;
+      }
+      return {...states, conclusion: value.conclusion, conditions: value.conditions, reasons: value.reasons, next_steps: value.next_steps};
     } catch (_) { return null; }
   }
   function excerpt(text) {

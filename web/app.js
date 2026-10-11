@@ -1,4 +1,18 @@
 const korean = {
+  "Reported agreement; compare the cited positions. Agreement has not been independently checked.": "요약이 합의를 보고했습니다. 아래 양쪽 입장을 비교하세요. 합의 여부를 독립적으로 확인한 것은 아닙니다.",
+  "Review paused for remaining facts or choices. See the conditions below.": "남은 사실 확인이나 선택 사항이 있어 검토를 멈췄습니다. 아래 적용 조건을 확인하세요.",
+  "Reported answer state": "모델이 보고한 답변 상태",
+  "Reported decision state": "모델이 보고한 선택 상태",
+  "Answer complete": "답변 완성",
+  "Conditional answer": "조건부 답변",
+  "Answer incomplete": "답변 미완성",
+  "Ready under stated conditions": "명시된 조건 아래 선택 가능",
+  "Your preference is needed": "사용자 선호에 따른 선택이 남음",
+  "A required fact is missing": "필수 사실 확인이 필요함",
+  "Evidence conflicts": "근거 간 충돌이 남음",
+  "A disagreement remains": "이견이 남음",
+  "These states are model assessments, not permission to act. Check all conditions below.": "상태는 모델의 판단이며 실행 승인이 아닙니다. 아래 적용 조건을 함께 확인하세요.",
+  "Reported agreement": "요약이 보고한 합의",
   "Discussion data": "토론 데이터",
   "This discussion data could not be read. Its original content is shown below.": "토론 데이터를 읽을 수 없어 아래에 원문을 표시합니다.",
   "Conditions and uncertainty": "적용 조건과 불확실성",
@@ -304,7 +318,7 @@ let focusedIssue = null, discussionView = 'results', starting = false, followedR
 const judgmentDrafts = new Map();
 const purposeDescriptions = {general: 'Explore the question from two perspectives.', decision: 'Make criteria, tradeoffs, and conditions for a decision explicit.', verify: 'Separate supporting evidence, counterevidence, and missing information.', compare: 'Compare alternatives against the same criteria.'};
 function renderPurpose() { $('purpose-hint').textContent = t(purposeDescriptions[$('purpose').value]); }
-const names = {agreed: 'Models agree', disputed: 'Disputed', insufficient_information: 'Needs information', unverified: 'Unverified'};
+const names = {agreed: 'Reported agreement', disputed: 'Disputed', insufficient_information: 'Needs information', unverified: 'Unverified'};
 
 async function api(path, payload) {
   const options = {headers: {'X-Agora-Token': token}};
@@ -475,22 +489,38 @@ function renderDetail(data) {
     const item = node('li'); item.append(node('strong', issue.topic || t('Unassessed issue')), node('p', issue.next_step || issue.reason || t('Unavailable'))); $('remaining-list').append(item);
   }
   const reason = data.automatic?.reason;
-  const messages = {agreement: 'The reported issues have reached agreement. This is not factual verification.', needs_information: 'Further review needs information. See the remaining questions below.', assessment_unavailable: 'The issue assessment could not be confirmed. Automatic review stopped.', repeated_positions: 'The reported positions repeated without a wording change. Review stopped.', round_limit: 'The review limit was reached. Remaining disagreements are included below.', deadline: 'The time limit was reached. Saved answers remain available.', user_stop: 'Automatic review was stopped at your request.'};
+  const messages = {consensus_unverified: 'Reported agreement; compare the cited positions. Agreement has not been independently checked.', agreement: 'Reported agreement; compare the cited positions. Agreement has not been independently checked.', needs_information: 'Review paused for remaining facts or choices. See the conditions below.', assessment_unavailable: 'The issue assessment could not be confirmed. Automatic review stopped.', repeated_positions: 'The reported positions repeated without a wording change. Review stopped.', round_limit: 'The review limit was reached. Remaining disagreements are included below.', deadline: 'The time limit was reached. Saved answers remain available.', user_stop: 'Automatic review was stopped at your request.'};
   $('automatic-reason').hidden = active || !messages[reason];
   $('automatic-reason').textContent = t(messages[reason] || '');
   renderJudgment(data);
-  $('summary-section').hidden = !record.summary; renderConclusion(record.summary || '');
+  $('summary-section').hidden = !record.summary; renderConclusion(record.summary || '', record.issue_outcomes?.issues || []);
   renderJourney(record, open);
 }
-function renderConclusion(summary) {
+function renderConclusion(summary, issues = []) {
   const card = AgoraDiscussion.resultCard(summary);
   $('summary-text').replaceChildren();
+  let review;
+  const agreements = issues.filter(issue => issue.status === 'agreed');
+  if (agreements.length) {
+    review = node('section', undefined, 'notice');
+    review.append(node('p', t('Reported agreement; compare the cited positions. Agreement has not been independently checked.')));
+    for (const issue of agreements) {
+      review.append(node('strong', issue.topic));
+      for (const position of issue.positions || []) review.append(node('blockquote', `${providerName(position.provider)}: ${position.quote || position.position || t('Unavailable')}`));
+    }
+  }
   if (!card) {
+    if (review) $('summary-text').append(review);
     if (/agora-result/.test(summary)) $('summary-text').append(node('p', t('The concise result could not be read. The full synthesis is shown instead.'), 'notice'));
     $('summary-text').append(renderAnswer(summary, t));
     return;
   }
   $('summary-text').append(node('p', card.conclusion, 'result-lead'));
+  if (card.answer_state) {
+    const answers = {complete:'Answer complete', conditional:'Conditional answer', incomplete:'Answer incomplete'};
+    const decisions = {ready:'Ready under stated conditions', user_choice:'Your preference is needed', missing_facts:'A required fact is missing', conflicting_evidence:'Evidence conflicts', unresolved_disagreement:'A disagreement remains'};
+    $('summary-text').append(node('p', `${t('Reported answer state')}: ${t(answers[card.answer_state])}`), node('p', `${t('Reported decision state')}: ${t(decisions[card.decision_state])}`), node('p', t('These states are model assessments, not permission to act. Check all conditions below.'), 'hint'));
+  }
   for (const [key, label] of [['conditions', 'Conditions and uncertainty'], ['reasons', 'Key reasons'], ['next_steps', 'Next steps']]) {
     if (!card[key].length) continue;
     const section = node('section', undefined, 'result-section'), list = node('ul');
@@ -498,6 +528,7 @@ function renderConclusion(summary) {
     for (const item of card[key]) list.append(node('li', item));
     section.append(list); $('summary-text').append(section);
   }
+  if (review) $('summary-text').append(review);
   const source = node('details', undefined, 'full-synthesis');
   source.append(node('summary', t('Full synthesis and evidence')), renderAnswer(summary, t));
   $('summary-text').append(source);
@@ -512,8 +543,8 @@ function renderOutcomes(data) {
   const record = data.record, issues = record.issue_outcomes?.issues || [];
   const groups = AgoraDiscussion.issueGroups(issues);
   const available = issues.length > 0, complete = record.status === 'completed';
-  $('outcome-title').textContent = t(available ? groups.open.length ? 'Questions remain open' : 'Common ground has emerged' : complete ? 'The issue assessment is unavailable' : 'The conclusions are still taking shape');
-  $('outcome-intro').textContent = t(available ? groups.open.length ? 'Read the open questions, compare the cited positions, and decide what needs another round.' : 'The reported issues are agreed. Review their evidence before relying on the conclusions.' : complete ? 'Read the saved answers or full synthesis; missing outcomes do not imply agreement.' : 'Follow the saved answers while the discussion runs. Issue outcomes appear after synthesis.');
+  $('outcome-title').textContent = t(available ? groups.open.length ? 'Questions remain open' : 'Reported agreement' : complete ? 'The issue assessment is unavailable' : 'The conclusions are still taking shape');
+  $('outcome-intro').textContent = t(available ? groups.open.length ? 'Read the open questions, compare the cited positions, and decide what needs another round.' : 'Reported agreement; compare the cited positions. Agreement has not been independently checked.' : complete ? 'Read the saved answers or full synthesis; missing outcomes do not imply agreement.' : 'Follow the saved answers while the discussion runs. Issue outcomes appear after synthesis.');
   if (!available && !complete && !(state.job.active && state.job.run_id === data.id)) {
     $('outcome-title').textContent = t('The discussion is paused');
     $('outcome-intro').textContent = t('Saved answers remain available. Resume the unfinished discussion to reach the synthesis.');
@@ -530,7 +561,7 @@ function renderOutcomes(data) {
     button.onclick = () => setDiscussionView('journey'); $('issue-overview').append(button); return;
   }
   if (!issues.some(issue => issue.id === focusedIssue)) focusedIssue = (groups.open[0] || groups.agreed[0]).id;
-  for (const [key, label] of [['agreed', 'Common ground'], ['open', 'Still open']]) {
+  for (const [key, label] of [['agreed', 'Reported agreement'], ['open', 'Still open']]) {
     const column = node('section', undefined, `issue-list ${key}`);
     column.append(node('h3', t(label)));
     if (!groups[key].length) column.append(node('p', t(key === 'agreed' ? 'No common ground reported yet.' : 'No open issues reported.'), 'hint'));

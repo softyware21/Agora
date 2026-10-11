@@ -50,3 +50,14 @@ const hostile = {...result, conclusion:'<img src=x onerror=alert(1)>'};
 assert.equal(view.resultCard(block(hostile)).conclusion, hostile.conclusion);
 assert.ok(view.resultInstruction.includes('material assumptions'));
 console.log('Concise results reject incomplete, duplicate, and unexpected structures.');
+
+for (const answer_state of ['complete', 'conditional', 'incomplete']) {
+  for (const decision_state of ['ready', 'user_choice', 'missing_facts', 'conflicting_evidence', 'unresolved_disagreement']) {
+    const card = view.resultCard(block({...result, answer_state, decision_state}));
+    assert.equal(card.answer_state, answer_state);
+    assert.equal(card.decision_state, decision_state);
+  }
+}
+for (const fields of [{answer_state:'complete'}, {decision_state:'ready'}, {answer_state:'verified',decision_state:'ready'}, {answer_state:'complete',decision_state:'authorized'}]) {
+  assert.equal(view.resultCard(block({...result,...fields})), null);
+}

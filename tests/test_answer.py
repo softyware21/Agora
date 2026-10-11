@@ -13,3 +13,7 @@ class AnswerTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is needed for view tests')
     def test_discussion_view(self):
         subprocess.run(['node', str(Path(__file__).with_name('test_discussion.cjs'))], check=True, capture_output=True)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is needed for view tests')
+    def test_result_view(self):
+        subprocess.run(['node', str(Path(__file__).with_name('test_result_view.cjs'))], check=True, capture_output=True)
