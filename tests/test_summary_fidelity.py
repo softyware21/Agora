@@ -34,3 +34,14 @@ class SummaryFidelityTests(unittest.TestCase):
         self.assertEqual(grade(fenced, self.items)['correct'], 8)
         for text in (fenced + '\n' + fenced, 'Explanation\n' + fenced, fenced + '\nTrailing text'):
             self.assertFalse(grade(text, self.items)['valid'])
+
+    def test_korean_cases_cover_abstention_without_exposing_keys(self):
+        items = cases('korean')
+        self.assertEqual(len({item['id'] for item in items}), 6)
+        self.assertEqual({item['expected'] for item in items}, {'faithful', 'distorted', 'uncertain'})
+        for item in items:
+            visible = prompt([item])
+            self.assertNotIn(item['rationale'], visible)
+            self.assertNotIn('"expected"', visible)
+            rows = [{'id': item['id'], 'verdict': item['expected'], 'reason': 'Comparison.'}]
+            self.assertEqual(grade(json.dumps(rows), [item])['correct'], 1)

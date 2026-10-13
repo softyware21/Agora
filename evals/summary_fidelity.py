@@ -1,11 +1,17 @@
 """Synthetic summary checks. This experiment does not control discussion outcomes."""
 import json
 import re
+from pathlib import Path
 
 from evidence import unique_fields
 
 
-def cases():
+def cases(suite='basic'):
+    if suite == 'korean':
+        return json.loads(Path(__file__).with_name('summary_fidelity_ko.json').read_text(encoding='utf-8'),
+                          object_pairs_hook=unique_fields)
+    if suite != 'basic':
+        raise ValueError('Unknown summary fidelity suite.')
     pairs = [
         ('Both participants declare ready. P1: Choose A for speed. P2: Choose B for cost.',
          'P1 recommends A; P2 recommends B. They have not agreed on a choice.',
@@ -70,12 +76,18 @@ def grade(text, items):
 
 if __name__ == '__main__':
     import argparse
-    from pathlib import Path
 
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--suite', choices=('basic', 'korean'), default='basic')
+    parser.add_argument('--case', help='Select one case to avoid cross-case cues.')
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument('--prompt', action='store_true', help='Print the key-free audit prompt.')
     action.add_argument('--response', type=Path, help='Grade a saved plain-text response offline.')
     args = parser.parse_args()
-    print(prompt(cases()) if args.prompt else
-          json.dumps(grade(args.response.read_text(encoding='utf-8'), cases()), indent=2))
+    items = cases(args.suite)
+    if args.case:
+        items = [item for item in items if item['id'] == args.case]
+        if not items:
+            parser.error('Unknown case ID.')
+    print(prompt(items) if args.prompt else
+          json.dumps(grade(args.response.read_text(encoding='utf-8'), items), indent=2))
