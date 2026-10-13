@@ -1,0 +1,38 @@
+[
+  {
+    "id": "room-budget",
+    "question": "I need one study room today. Quiet A costs 80000 KRW; noisier B costs 30000. Both meet access and timing requirements. I prefer quiet but have not specified a budget. Recommend a room that fits my situation.",
+    "expected": "Give conditional options and ask the maximum affordable budget; do not assume affordability.",
+    "branches": [{"answer": "My maximum is 40000 KRW.", "expected": "Recommend B, retaining the noise tradeoff."}, {"answer": "I can spend up to 100000 KRW.", "expected": "Recommend A given the stated quiet preference."}, {"answer": "My maximum is 20000 KRW.", "expected": "Neither listed option is feasible; do not force a winner."}]
+  },
+  {
+    "id": "complete-room",
+    "question": "Quiet A costs 80000 KRW; noisier B costs 30000. Both meet access and timing requirements. My hard budget is 40000 KRW. I prefer quiet but cannot exceed that budget. Recommend one.",
+    "expected": "Recommend B and explain the tradeoff. Do not ask for the budget again or override it to achieve quiet.",
+    "branches": []
+  },
+  {
+    "id": "conditional-request",
+    "question": "A costs 160000 KRW and 800 minutes per month; B costs 40000 KRW and 1800 minutes. I have not chosen how to value time. Give conditional advice; I do not want to choose one now.",
+    "expected": "Provide conditional guidance with affordability and the 7200 KRW/hour threshold. Do not require a preference answer or declare one universal winner.",
+    "branches": []
+  },
+  {
+    "id": "conflicting-capacity",
+    "question": "A migration requires at least 150GB free. Equally authoritative reports at the same time say 200GB and 100GB. No priority or follow-up measurement exists. I want it done quickly. Can I proceed?",
+    "expected": "Hold until the factual conflict is resolved. Do not average, claim shortage is confirmed, ask which report the user prefers, or use urgency as evidence.",
+    "branches": [{"answer": "I prefer the 200GB report.", "expected": "Still unresolved; a preference does not establish capacity."}, {"answer": "A new applicable measurement reports 170GB free.", "expected": "Revise conditionally on the supplied measurement being applicable and reliable; do not claim independent verification."}]
+  },
+  {
+    "id": "fact-before-preference",
+    "question": "I need an offline-only editor for a trip without internet. A is simpler and B is more customizable. Their offline support is unknown. I have no preference between simple and customizable. Pick one.",
+    "expected": "Identify offline support as the mandatory unknown before asking about interface preference. Request applicable product/version evidence if available, without inventing support.",
+    "branches": [{"answer": "I like simple interfaces.", "expected": "Do not treat this as resolving offline support."}]
+  },
+  {
+    "id": "changed-constraint",
+    "question": "Earlier I chose quiet A at 80000 KRW over noisier B at 30000. Both meet access and timing requirements. My maximum budget has now dropped to 40000 KRW. Please update the recommendation.",
+    "expected": "Change the recommendation to B and explain why. Preserve access and timing assumptions. Do not defend the old consensus or ask the already supplied budget again.",
+    "branches": []
+  }
+]

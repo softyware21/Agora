@@ -1,7 +1,14 @@
 # Agora
 
 Automated, rule-driven debates between Codex and Claude Code, using locally
-installed official CLIs and your own subscription login.
+installed official CLIs and your own subscription login. Start with a question;
+Agora compares the options and conditions that matter to your situation. When
+one missing detail could change the recommendation, the result can offer an
+optional question. Answer it to prepare a follow-up, then review usage before
+starting. Model agreement is not the goal or a guarantee of a better answer.
+
+See [decision-support evaluation](docs/DECISION_QUALITY.md) for the criteria and
+planned single-model comparisons. Superiority over a single model is not established.
 
 **Status: early prototype.** Agora checks declared arithmetic and matches quotations
 against supplied source snapshots. Models assess whether those quotations support

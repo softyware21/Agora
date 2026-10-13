@@ -349,6 +349,27 @@ for source fingerprints, scope, timing, and limitations. Source transcripts and
 responses remain local; the reusable loader accepts local cases without exposing
 answer keys or metadata in the audit prompt. No audit calls were added to the UI.
 
+## Decision support and clarification, 2026-10-14
+
+Issue #14 adds an optional single clarification to new UI discussions. Answers
+transfer into the existing continuation editor for review before a model call.
+Legacy results, original records, and automatic stopping remain unchanged. Tests
+cover field validation, draft separation, active-job guards, and note transfer;
+the full 147-test suite passed. Existing defaults remain behind optional settings.
+
+Four live calls covered two independent design reviews and two summary-format
+checks on an authored budget case. Both summaries asked for the maximum budget
+and retained the A/B/neither branches. These were not complete debate-plus-answer
+flows, nor evidence of superiority over one model. Browser layout remains
+unverified because of the earlier browser-tool policy block.
+
+[Decision quality](DECISION_QUALITY.md) now defines constraint adherence, worthwhile
+questions, conditional usefulness, revision, and user effort alongside factual
+support. Six development cases include scripted answer branches for future paired
+comparison; they have not all been run. Single-model controls must receive the
+same clarification opportunities and budget. Keep #14 open for those comparisons
+and first-time-user validation.
+
 ## Remaining coverage
 
 - Repeat representative cases and use independent blinded reviewers.
