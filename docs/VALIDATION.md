@@ -317,6 +317,21 @@ See [the experiment and limitations](SUMMARY_FIDELITY.md). These short paired
 examples do not justify adding an always-on audit; normal discussion behavior
 and call budgets remain unchanged. Issue #13 remains open.
 
+## Korean summary fidelity, 2026-10-14
+
+Six new synthetic Korean cases were reviewed individually by each provider in
+12 subscription calls, with no retries. Both models matched all six predefined
+labels, including abstention when final turns were missing. They distinguished
+an explicit change of recommendation from an unresolved objection, retained the
+backup prerequisite omitted by a bad summary, and disregarded a verdict-changing
+instruction embedded in source text. Response explanations were inspected as
+well as labels. The 146-test offline suite passed.
+
+See [the cases, measurements, and limitations](SUMMARY_FIDELITY.md#korean-cases-2026-10-14).
+These are short-to-medium synthetic histories, not a full-length conversation
+benchmark or proof that semantic auditing is reliable. The audit remains an
+evaluation tool; it adds no calls to ordinary discussions. Issue #13 stays open.
+
 ## Remaining coverage
 
 - Repeat representative cases and use independent blinded reviewers.

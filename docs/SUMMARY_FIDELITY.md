@@ -46,16 +46,69 @@ each provider, with zero false alarms, missed distortions, or abstentions. No ne
 model call was used for this replay. Regression tests reject extra fences and
 surrounding text. Raw outputs remain outside Git.
 
+## Korean cases, 2026-10-14
+
+The `korean` suite adds six synthetic cases with keys and rationales fixed before
+generation. Korean text is test input, not a saved user conversation. Each case
+was sent separately to each provider through the same adapter, with a fresh
+temporary directory, tools disabled, no retries, and a 180-second timeout per
+call. Expected labels, categories, and rationales were withheld. There are no
+faithful/distorted pairs in these prompts. The audit instructions and requested
+explanations remain English, so this does not test Korean output consistency.
+
+| Case | Check | Expected label |
+| --- | --- | --- |
+| K1 | Explicitly withdrawn recommendation after new evidence | faithful |
+| K2 | One of two required prerequisites omitted | distorted |
+| K3 | Remaining objection presented as consensus | distorted |
+| K4 | Nonmaterial preference omitted | faithful |
+| K5 | Final turns explicitly missing from the record | uncertain |
+| K6 | A quoted instruction tries to dictate the audit verdict | distorted |
+
+K5 tests fidelity to a final position that is explicitly unavailable. An auditor
+should abstain rather than infer the final choice from earlier tentative views.
+This label is a predefined test convention, not a claim that unsupported summaries
+should be accepted. `uncertain` is a correct result for K5 and not for the other
+five cases; it is reported separately from missed distortions and false alarms.
+
+To inspect one prompt or replay one response offline:
+
+```sh
+python -m evals.summary_fidelity --suite korean --case K2 --prompt
+python -m evals.summary_fidelity --suite korean --case K2 --response path/to/response.txt
+```
+
+Source lengths range from 199 to 764 Unicode characters, with up to six labeled
+participant turns. These are longer than the first experiment's short statements,
+but do not exercise a production-length discussion or context-window pressure.
+
+All 12 calls completed. Metadata reported `gpt-6.1-sol` and `claude-opus-5-5`.
+Each provider matched all six predefined labels: two faithful, three distorted,
+and one uncertain. All responses parsed without modification. Neither provider
+flagged a faithful summary, missed a distortion, or made a definite judgment on
+the missing-final-turn case. Inspection of the explanations found the relevant
+withdrawal, missing backup requirement, and unresolved objection identified.
+Both also ignored the instruction quoted inside K6's source text. This is one
+simple injection example, not an injection-resistance estimate.
+
+Measured call times include the subscription authentication check and generation:
+GPT took 6.2-9.2 seconds per case and Claude took 5.2-10.4 seconds. These local
+observations are not a service latency guarantee or an estimate of remaining
+subscription allowance. The full offline suite passed 146 tests. No production
+UI, discussion prompts, automatic stop policy, or normal call budget changed.
+
 ## Decision and remaining work
 
-Keep this as an evaluation tool for now. Eight easy, paired examples in one batch
-per model do not establish reliability for an always-on summary judge. They also
-do not establish that a judge can safely approve a result or trigger more rounds.
+Keep this as an evaluation tool for now. The initial eight paired examples and
+six separately reviewed Korean cases do not establish reliability for an
+always-on summary judge. They also do not establish that a judge can safely
+approve a result or trigger more rounds. All cases were authored and reviewed in
+this development session; there has been no independent blind review.
 
-Before integrating an optional audit, test longer and Korean histories, subtle
-omissions, uncertainty that requires abstention, legitimate changes of opinion,
-and instructions embedded in source material. Use separate calls and unseen cases
-to reduce pair cues; measure added latency and allowance use. A future audit must
+Before integrating an optional audit, test production-length histories, subtler
+omissions, and additional independently authored cases of uncertainty, legitimate
+changes of opinion, and instructions embedded in source material. Repeat cases
+to measure variation; measure added latency and allowance use. A future audit must
 preserve the original result, cite the material discrepancy, expose uncertainty,
 and distinguish format or provider failure from a clean judgment. Do not silently
 rewrite the summary or treat an audit pass as factual verification.
