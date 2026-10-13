@@ -1,10 +1,28 @@
 import json
 import unittest
+import tempfile
+from pathlib import Path
 
-from evals.summary_fidelity import cases, grade, prompt
+from evals.summary_fidelity import cases, grade, prompt, load_cases_file
 
 
 class SummaryFidelityTests(unittest.TestCase):
+    def test_local_cases_preserve_source_and_hide_private_metadata(self):
+        item = {'id': 'L1', 'source': '긴 원문\n' * 2000, 'summary': '요약',
+                'expected': 'faithful', 'private_path': 'PRIVATE_PATH', 'rationale': 'SECRET_KEY'}
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'cases.json'
+            path.write_text(json.dumps([item]), encoding='utf-8')
+            loaded = load_cases_file(path)
+            self.assertEqual(loaded, [item])
+            self.assertNotIn('PRIVATE_PATH', prompt(loaded))
+            self.assertNotIn('SECRET_KEY', prompt(loaded))
+            for data in ([item, item], [dict(item, source='')], [dict(item, id='../x')],
+                         [dict(item, expected='pass')], {}, []):
+                path.write_text(json.dumps(data), encoding='utf-8')
+                with self.assertRaises(ValueError):
+                    load_cases_file(path)
+
     def setUp(self):
         self.items = cases()
         self.rows = [{'id': c['id'], 'verdict': c['expected'], 'reason': 'Comparison explanation.'}

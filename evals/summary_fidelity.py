@@ -6,6 +6,26 @@ from pathlib import Path
 from evidence import unique_fields
 
 
+def load_cases_file(path):
+    items = json.loads(Path(path).read_text(encoding='utf-8'), object_pairs_hook=unique_fields)
+    if not isinstance(items, list) or not 1 <= len(items) <= 100:
+        raise ValueError('Expected 1-100 local audit cases.')
+    seen = set()
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError('Invalid audit case.')
+        identifier = item.get('id')
+        if (not isinstance(identifier, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', identifier)
+                or identifier in seen):
+            raise ValueError('Audit case IDs must be unique and path-safe.')
+        seen.add(identifier)
+        if (not all(isinstance(item.get(key), str) and 1 <= len(item[key]) <= limit
+                    for key, limit in (('source', 200000), ('summary', 20000)))
+                or item.get('expected') not in ('faithful', 'distorted', 'uncertain')):
+            raise ValueError('Invalid audit source, summary, or expected label.')
+    return items
+
+
 def cases(suite='basic'):
     if suite == 'korean':
         return json.loads(Path(__file__).with_name('summary_fidelity_ko.json').read_text(encoding='utf-8'),
@@ -79,12 +99,13 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--suite', choices=('basic', 'korean'), default='basic')
+    parser.add_argument('--cases-file', type=Path, help='Load local cases without committing transcripts.')
     parser.add_argument('--case', help='Select one case to avoid cross-case cues.')
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument('--prompt', action='store_true', help='Print the key-free audit prompt.')
     action.add_argument('--response', type=Path, help='Grade a saved plain-text response offline.')
     args = parser.parse_args()
-    items = cases(args.suite)
+    items = load_cases_file(args.cases_file) if args.cases_file else cases(args.suite)
     if args.case:
         items = [item for item in items if item['id'] == args.case]
         if not items:
