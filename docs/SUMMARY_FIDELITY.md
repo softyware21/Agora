@@ -97,15 +97,80 @@ observations are not a service latency guarantee or an estimate of remaining
 subscription allowance. The full offline suite passed 146 tests. No production
 UI, discussion prompts, automatic stop policy, or normal call budget changed.
 
+## Full saved discussions, 2026-10-14
+
+The next check reused two actual Agora discussions generated earlier for fictional
+capacity and commute questions. These are model-generated discussions of synthetic
+scenarios, not private user conversations. Each contains two initial answers and
+two review answers. All four participant texts, including calculation and position
+blocks, were included verbatim with the original question and turn labels. The
+original generated summary was excluded to avoid supplying a reference answer.
+
+| Source | Participant text characters | Complete audit source characters | Source SHA-256 |
+| --- | ---: | ---: | --- |
+| Capacity | 5,631 | 6,023 | `8c23d4db58419802c1f22d2e156d05920a9361e9d436c6fd864ce8f6648d4356` |
+| Commute | 6,673 | 7,009 | `0f90edb58c1c2382aa0c73d23ca482dc68ddedcba386b4559c8be1d24b78748d` |
+
+Counts are Unicode characters, not tokens. The SHA-256 covers the UTF-8 audit
+source, including its question and turn labels. Transcripts and model responses
+remain local. Each source was given an author-written faithful summary and a
+controlled distorted variant, with expected labels fixed before generation:
+
+- L1 retains unconfirmed capacity and the requirement to resolve the reports.
+- L2 changes unconfirmed capacity into a confirmed shortage.
+- L3 retains the commute tradeoff, affordability, and conditional recommendations.
+- L4 overrides affordability when the user's valuation of time exceeds the threshold.
+
+The variants change explicit claims. They do not measure detection of every subtle
+omission. Every case was reviewed in a separate fresh subscription CLI call by
+each provider, so neither paired summary appeared in the same prompt or session.
+Each call had a 180-second timeout, with no retries and no tools. Both providers
+also authored the original discussion: fresh sessions remove conversation history,
+but do not make these independent model families or blinded human reviewers.
+
+The local-case option supports replay without committing transcripts:
+
+```sh
+python -m evals.summary_fidelity --cases-file path/to/local-cases.json --case L2 --prompt
+python -m evals.summary_fidelity --cases-file path/to/local-cases.json --case L2 --response path/to/response.txt
+```
+
+The file is an array of objects containing `id`, `source`, `summary`, and `expected`.
+The prompt exposes only the ID, source, and proposed summary. Optional private
+metadata and the answer key are withheld. IDs must be unique and path-safe;
+malformed or empty cases are rejected. Loading and grading do not call a model.
+
+These inputs match the full length of two existing one-round Agora discussions.
+They do not test many-round histories, context-window limits, automatic repair,
+or the error rate of the original summarizer. Normal discussion behavior remains
+unchanged; the audit is still an evaluation tool.
+
+All eight calls completed and parsed, with reported models `gpt-6.1-sol` and
+`claude-opus-5-5`. Each provider scored 4/4: both faithful controls accepted and
+both distortions detected, with no abstentions. Explanations identified the
+uncertainty/shortage distinction and the separate affordability prerequisite.
+GPT calls took 7.2-9.3 seconds and Claude calls took 6.1-11.1 seconds, including
+authentication and generation. The full offline suite passed 147 tests.
+
+Claude also identified an internal inconsistency left in L2's mutated summary:
+it claims a confirmed shortage but later says Claude accepted the distinction
+between unconfirmed and confirmed shortage. This makes L2 easier and means its
+success alone cannot establish that the full source was necessary for detection.
+The proposed summaries were written after inspecting the sources, so the audit
+does not measure unbiased summary generation or independently authored grading.
+Keep the frozen cases as they were; do not remove this limitation after seeing
+the result. Future cases should include internally consistent distortions and
+many-round records with decisive evidence far from the final turn.
+
 ## Decision and remaining work
 
 Keep this as an evaluation tool for now. The initial eight paired examples and
-six separately reviewed Korean cases do not establish reliability for an
+six separately reviewed Korean cases, and four full-record checks do not establish reliability for an
 always-on summary judge. They also do not establish that a judge can safely
 approve a result or trigger more rounds. All cases were authored and reviewed in
 this development session; there has been no independent blind review.
 
-Before integrating an optional audit, test production-length histories, subtler
+Before integrating an optional audit, test many-round histories, subtler
 omissions, and additional independently authored cases of uncertainty, legitimate
 changes of opinion, and instructions embedded in source material. Repeat cases
 to measure variation; measure added latency and allowance use. A future audit must

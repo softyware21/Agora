@@ -332,6 +332,23 @@ These are short-to-medium synthetic histories, not a full-length conversation
 benchmark or proof that semantic auditing is reliable. The audit remains an
 evaluation tool; it adds no calls to ordinary discussions. Issue #13 stays open.
 
+## Full discussion summary audit, 2026-10-14
+
+Two saved synthetic-scenario discussions supplied all four participant turns,
+including structured blocks, without truncation. Audit sources contained 6,023
+and 7,009 Unicode characters with the question and labels. Each received a faithful
+and a deliberately distorted summary, reviewed in separate sessions by both
+providers: eight calls total. Both providers matched all four predefined labels,
+identifying a false assertion of confirmed shortage and an overridden budget
+prerequisite. No normal summary was flagged. The 147-test offline suite passed.
+
+This covers actual one-round discussion lengths, not many-round histories or
+context limits. One distorted summary retained an internal contradiction, making
+it easier to detect. See [the full-record experiment](SUMMARY_FIDELITY.md#full-saved-discussions-2026-10-14)
+for source fingerprints, scope, timing, and limitations. Source transcripts and
+responses remain local; the reusable loader accepts local cases without exposing
+answer keys or metadata in the audit prompt. No audit calls were added to the UI.
+
 ## Remaining coverage
 
 - Repeat representative cases and use independent blinded reviewers.
