@@ -47,6 +47,12 @@ for (const change of [{version:2}, {conditions:[]}, {conditions:['']}, {conclusi
   assert.equal(view.resultCard(block({...result,...change})), null);
 }
 const hostile = {...result, conclusion:'<img src=x onerror=alert(1)>'};
+const clarification = {question:'What is your budget?', why:'This determines which option is affordable.'};
+assert.deepEqual(view.resultCard(block({...result, clarification})).clarification, clarification);
+assert.equal(view.resultCard(block({...result, clarification:null})).clarification, null);
+for (const clarification of [{question:'Missing reason'}, {question:'',why:'Reason'}, {question:'x'.repeat(301),why:'Reason'}, {question:'Q',why:'R',extra:'ignored'}, []]) {
+  assert.equal(view.resultCard(block({...result, clarification})), null);
+}
 assert.equal(view.resultCard(block(hostile)).conclusion, hostile.conclusion);
 assert.ok(view.resultInstruction.includes('material assumptions'));
 console.log('Concise results reject incomplete, duplicate, and unexpected structures.');
