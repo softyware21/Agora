@@ -1,4 +1,10 @@
 const korean = {
+  "One detail would help": "이것 하나만 알려주세요",
+  "Your answer": "내 답변",
+  "Review follow-up →": "답변 반영 전 확인 →",
+  "Optional. You can keep the conditional answer. Review the next discussion and its usage before starting.": "답변은 선택 사항입니다. 지금의 조건별 답변을 사용해도 됩니다. 이어갈 내용과 사용량을 확인한 뒤 시작합니다.",
+  "Question to clarify": "확인할 질문",
+  "Ask in your own words. Get a recommendation that fits your situation, with the conditions that could change it.": "고민을 편하게 적어주세요. 내 상황에 맞는 추천과, 추천이 달라지는 조건을 함께 정리해 드립니다.",
   "The summary reports agreement, but the participants declared different decision categories. Review their positions below.": "요약은 합의를 보고했지만 참여자들이 직접 기록한 판단 유형은 다릅니다. 아래 각자의 결론을 확인하세요.",
   "Participants' own conclusions": "참여자가 직접 기록한 결론",
   "These declarations come from the latest participant answers, not the summary. Matching categories do not establish agreement or truth.": "요약이 아닌 각 참여자의 최신 답변에서 가져왔습니다. 판단 유형이 같아도 합의나 사실 검증을 뜻하지 않습니다.",
@@ -322,6 +328,7 @@ let mode = 'new', parent = null, selected = null, detail = null, planPayload = n
 let state = {job: {}, runs: []}, initialized = false, polling = false, historySignature = '', detailSignature = '';
 let focusedIssue = null, discussionView = 'results', starting = false, followedRun = null, followedOrigin = null;
 const judgmentDrafts = new Map();
+const clarificationDrafts = new Map();
 const purposeDescriptions = {general: 'Explore the question from two perspectives.', decision: 'Make criteria, tradeoffs, and conditions for a decision explicit.', verify: 'Separate supporting evidence, counterevidence, and missing information.', compare: 'Compare alternatives against the same criteria.'};
 function renderPurpose() { $('purpose-hint').textContent = t(purposeDescriptions[$('purpose').value]); }
 const names = {agreed: 'Reported agreement', disputed: 'Disputed', insufficient_information: 'Needs information', unverified: 'Unverified'};
@@ -406,7 +413,7 @@ function edit(nextMode = 'new', record = null, id = null) {
   mode = nextMode; parent = id; selected = null; detailSignature = ''; invalidate(); error('');
   $('editor').hidden = false; $('discussion').hidden = true;
   $('editor-title').textContent = mode === 'new' ? t('What would you like to figure out?') : mode === 'resume' ? t('Pick up where you left off.') : t('What should we reconsider?');
-  $('editor-intro').textContent = mode === 'new' ? t('Ask a question. GPT and Claude will examine it together and bring back a conclusion, with reasons and remaining uncertainty.') : mode === 'resume' ? t('Resume within the saved round limit. Completed answers stay in place; the time budget starts again.') : t('Add new information or change the conditions. Earlier answers stay in the original record.');
+  $('editor-intro').textContent = mode === 'new' ? t('Ask in your own words. Get a recommendation that fits your situation, with the conditions that could change it.') : mode === 'resume' ? t('Resume within the saved round limit. Completed answers stay in place; the time budget starts again.') : t('Add new information or change the conditions. Earlier answers stay in the original record.');
   $('question').value = record?.question || ''; $('question').readOnly = mode !== 'new';
   $('rules').value = record?.rules ?? state.default_rules ?? '';
   $('note').value = ''; $('note-wrap').hidden = mode !== 'continue'; $('sources').value = '';
@@ -418,7 +425,7 @@ function edit(nextMode = 'new', record = null, id = null) {
   $('summary-provider').value = models.summary_provider || 'codex';
   fillModels('codex', 'codex', models.codex); fillModels('claude', 'claude', models.claude);
   fillModels('summary', $('summary-provider').value, models.summary_model);
-  $('model-settings').open = mode !== 'new';
+  $('model-settings').open = false;
   $('timeout').value = '180'; $('deadline').value = '600';
   for (const control of $('setup').querySelectorAll('input,textarea,select')) control.disabled = mode === 'resume' && !['timeout','deadline'].includes(control.id);
   $('start').textContent = mode === 'new' ? t('Start discussion →') : mode === 'resume' ? t('Resume discussion →') : t('Start follow-up →');
@@ -499,10 +506,10 @@ function renderDetail(data) {
   $('automatic-reason').hidden = active || !messages[reason];
   $('automatic-reason').textContent = t(messages[reason] || '');
   renderJudgment(data);
-  $('summary-section').hidden = !record.summary; renderConclusion(record.summary || '', record.issue_outcomes?.issues || [], record.participant_positions);
+  $('summary-section').hidden = !record.summary; renderConclusion(record.summary || '', record.issue_outcomes?.issues || [], record.participant_positions, data);
   renderJourney(record, open);
 }
-function renderConclusion(summary, issues = [], participantPositions) {
+function renderConclusion(summary, issues = [], participantPositions, data) {
   const card = AgoraDiscussion.resultCard(summary);
   $('summary-text').replaceChildren();
   const direct = renderParticipantPositions(participantPositions);
@@ -524,6 +531,8 @@ function renderConclusion(summary, issues = [], participantPositions) {
     return;
   }
   $('summary-text').append(node('p', card.conclusion, 'result-lead'));
+  const clarification = renderClarification(card, data);
+  if (clarification) $('summary-text').append(clarification);
   if (card.answer_state) {
     const answers = {complete:'Answer complete', conditional:'Conditional answer', incomplete:'Answer incomplete'};
     const decisions = {ready:'Ready under stated conditions', user_choice:'Your preference is needed', missing_facts:'A required fact is missing', conflicting_evidence:'Evidence conflicts', unresolved_disagreement:'A disagreement remains'};
@@ -541,6 +550,27 @@ function renderConclusion(summary, issues = [], participantPositions) {
   const source = node('details', undefined, 'full-synthesis');
   source.append(node('summary', t('Full synthesis and evidence')), renderAnswer(summary, t));
   $('summary-text').append(source);
+}
+function renderClarification(card, data) {
+  if (!card.clarification || !data?.can_continue || data.record.status !== 'completed') return null;
+  const {question, why} = card.clarification;
+  const key = JSON.stringify([data.id, question]);
+  const section = node('section', undefined, 'clarification-card');
+  const label = node('label', question), input = node('textarea'), button = node('button', t('Review follow-up →'), 'primary');
+  input.id = 'clarification-answer'; label.htmlFor = input.id;
+  input.rows = 2; input.maxLength = 2000; input.value = clarificationDrafts.get(key) || '';
+  button.type = 'button'; button.disabled = !!state.job.active || !input.value.trim();
+  input.oninput = () => { clarificationDrafts.set(key, input.value); button.disabled = !!state.job.active || !input.value.trim(); };
+  button.onclick = () => {
+    if (state.job.active || !input.value.trim()) return;
+    const answer = input.value.trim();
+    edit('continue', data.record, data.id);
+    $('note').value = `${t('Question to clarify')}: ${question}\n${t('Your answer')}: ${answer}`;
+    $('note').focus();
+  };
+  section.append(node('h3', t('One detail would help')), label, node('p', why, 'hint'), input,
+    node('p', t('Optional. You can keep the conditional answer. Review the next discussion and its usage before starting.'), 'hint'), button);
+  return section;
 }
 function renderParticipantPositions(board) {
   if (!board?.positions?.some(position => position.status === 'declared')) return null;
@@ -864,7 +894,7 @@ function setLanguage(value) {
   }
   for (const [element, name, original] of staticAttributes) element.setAttribute(name, t(original));
   $('editor-title').textContent = t(mode === 'new' ? 'What would you like to figure out?' : mode === 'resume' ? 'Pick up where you left off.' : 'What should we reconsider?');
-  $('editor-intro').textContent = t(mode === 'new' ? 'Ask a question. GPT and Claude will examine it together and bring back a conclusion, with reasons and remaining uncertainty.' : mode === 'resume' ? 'Resume within the saved round limit. Completed answers stay in place; the time budget starts again.' : 'Add new information or change the conditions. Earlier answers stay in the original record.');
+  $('editor-intro').textContent = t(mode === 'new' ? 'Ask in your own words. Get a recommendation that fits your situation, with the conditions that could change it.' : mode === 'resume' ? 'Resume within the saved round limit. Completed answers stay in place; the time budget starts again.' : 'Add new information or change the conditions. Earlier answers stay in the original record.');
   $('rounds-label').textContent = t(mode === 'continue' ? 'Additional review rounds' : 'Review rounds');
   $('start').textContent = t(mode === 'new' ? 'Start discussion →' : mode === 'resume' ? 'Resume discussion →' : 'Start follow-up →');
   fillModels('codex', 'codex', savedModels.codex); fillModels('claude', 'claude', savedModels.claude);

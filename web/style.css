@@ -865,6 +865,9 @@ html[lang="ko"] h1,html[lang="ko"] .verdict h2,html[lang="ko"] .judgment-section
 .result-section h3 { font-size:14px; margin:16px 0 6px; }
 .result-section ul { margin:6px 0; padding-left:22px; }
 .result-section li { margin:5px 0; }
+.clarification-card { margin:20px 0; padding:20px; background:#f5efdf; border:1px solid var(--line, #d8cdb8); border-radius:12px; }
+.clarification-card h3 { margin-top:0; }
+.clarification-card textarea { width:100%; min-height:80px; }
 .full-synthesis,.discussion-data { margin-top:22px; }
 .full-synthesis > summary,.discussion-data > summary { cursor:pointer; font-size:12px; color:var(--muted); }
 .finished .progress-card { margin-top:28px; }
